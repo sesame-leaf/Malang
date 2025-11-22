@@ -3,333 +3,35 @@ import sys
 import pandas as pd
 import random
 import os
-import math
+
+from src.config import *
+from src.dotori import *
+from src.Button import *
+from src.ItemManager import *
+from src.WordMeaningManager import *
+
 
 pygame.init()
 
-# ================
-# 기본 경로 설정
-# ================
-# __file__이 없는 환경에서도 동작하도록 안전하게 처리
-try:
-    base_path = os.path.dirname(os.path.abspath(__file__))
-except NameError:
-    base_path = os.getcwd()
-ASSET_PATHS = {
-    "logo": os.path.join(base_path, "assets", "logo.png"),
-    "guest_button": os.path.join(base_path, "assets", "btn_guest.png"),
-    "account_button": os.path.join(base_path, "assets", "btn_account.png"),
-    "back_button": os.path.join(base_path, "assets", "back_button.png"),
-    "nav_books": os.path.join(base_path, "assets", "nav_books.png"),
-    "nav_home": os.path.join(base_path, "assets", "nav_home.png"),
-    "nav_social": os.path.join(base_path, "assets", "nav_social.png"),
-    "exit_button": os.path.join(base_path, "assets", "btn_exit.png"),
-    "login_menu_bg": os.path.join(base_path, "assets", "login_menu_bg.png"),
-    "main_menu_bg": os.path.join(base_path, "assets", "main_menu_bg.png"),
-    "room_bg": os.path.join(base_path, "assets", "room_bg.png"),
-    "social_vs_bg": os.path.join(base_path, "assets", "social_vs_bg.png"),
-    "my_room_bg": os.path.join(base_path, "assets", "my_room_bg.png"),
-    "my_home_bg": os.path.join(base_path, "assets", "my_home_bg.png"),
-    "ranking_bg": os.path.join(base_path, "assets", "ranking_bg.png"),
-    "pick_a_word_bg": os.path.join(base_path, "assets", "pick_a_word_bg.png"),
-    "select_the_meaning_bg": os.path.join(base_path, "assets", "select_the_meaning_bg.png"),
-    "check_icon": os.path.join(base_path, "assets", "check_img.png"),
-    "x_icon": os.path.join(base_path, "assets", "x_icon.png"),
-    "char_default": os.path.join(base_path, "assets", "char_default.png"),
-    "item_shirt": os.path.join(base_path, "assets", "item_shirt.png"),
-    "item_pants": os.path.join(base_path, "assets", "item_pants.png"),
-    "item_glasses": os.path.join(base_path, "assets", "item_glasses.png"),
-    "item_hat": os.path.join(base_path, "assets", "item_hat.png"),
-    "hamster_with_glasses": os.path.join(base_path, "assets", "hamster_with_glasses.png"),
-    "hamster_with_glasses,sunflower": os.path.join(base_path, "assets", "hamster_with_glasses,sunflower.png"),
-    "hamster_with_sunflower": os.path.join(base_path,"assets","hamster_with_sunflower.png"),
-    "sunflower_price" : os.path.join(base_path, "assets", "sunflower_price.png"),
-    "glasses_price" : os.path.join(base_path, "assets", "glasses_price.png"),
-    "lay_off": os.path.join(base_path, "assets", "lay_off.png"),
-    "put_on": os.path.join(base_path, "assets", "put_on.png"),
-    "quiz_option": os.path.join(base_path, "assets", "quiz_option.png"),
-    "toggle_on": os.path.join(base_path, "assets", "toggle_on.png"),
-    "toggle_off": os.path.join(base_path, "assets", "toggle_off.png"),
-    "theme_light": os.path.join(base_path, "assets", "theme_light.png"),
-    "theme_dark": os.path.join(base_path, "assets", "theme_dark.png"),
-}
 
 # ================
 # 화면 설정
 # ================
-SCREEN_WIDTH, SCREEN_HEIGHT = 350, 700
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("말랑")
 
-# 색상 및 테마
-RED, BLUE = (220, 80, 80), (100, 140, 250)
-GREEN_LIGHT, RED_LIGHT = (144, 238, 144), (255, 182, 193)
-GRAY = (180, 180, 180)
-LIGHT_BLUE_GRAY = (200, 210, 230)
-light_theme_colors = {'bg': (255, 255, 255), 'text': (0, 0, 0), 'ui_bg': (230, 230, 230), 'ui_accent': (200, 200, 200), 'bubble_bg': (255, 255, 255), 'border': (200, 200, 200)}
-dark_theme_colors = {'bg': (40, 42, 54), 'text': (248, 248, 242), 'ui_bg': (68, 71, 90), 'ui_accent': (98, 114, 164), 'bubble_bg': (68, 71, 90), 'border': (150, 150, 150)}
-current_theme, COLORS = "light", light_theme_colors
-
-# 폰트 로딩 (assets 폴더 사용)
-try:
-    FONT_PATH = os.path.join(base_path, "assets", "NanumBarunGothic.ttf")
-    font_large = pygame.font.Font(FONT_PATH, 36)
-    font_medium = pygame.font.Font(FONT_PATH, 24)
-    font_small = pygame.font.Font(FONT_PATH, 17)
-    font_tiny = pygame.font.Font(FONT_PATH, 14)
-    font_atomic = pygame.font.Font(FONT_PATH, 10)
-except Exception:
-    # 경고는 출력하지만 실행은 계속
-    try:
-        print(f"경고: 폰트 파일을 찾을 수 없습니다: {FONT_PATH}")
-    except Exception:
-        pass
-    font_large, font_medium, font_small, font_tiny = [pygame.font.SysFont(None, size) for size in [48, 32, 24, 18]]
-
-# ======================
-# 데이터(문제) 로드
-# ======================
-LEVEL_CHOICES = [1, 2, 3]
-try:
-    questions_path = os.path.join(base_path, "data", "vocabulary_spelling_questions.csv")
-    df = pd.read_csv(questions_path, encoding='utf-8').astype(str).replace('nan', '')
-    questions_by_level = {lvl: df[df['단계'] == str(lvl)].to_dict('records') for lvl in LEVEL_CHOICES}
-    all_questions = []
-    for lvl in LEVEL_CHOICES:
-        all_questions.extend(questions_by_level[lvl])
-except FileNotFoundError:
-    print("오류: 'vocabulary_spelling_questions.csv' 파일을 찾을 수 없습니다.")
-    questions_by_level = {lvl: [] for lvl in LEVEL_CHOICES}
-    all_questions = []
-
-available_levels = {lvl: len(questions_by_level.get(lvl, [])) > 0 for lvl in LEVEL_CHOICES}
 
 def has_available_levels():
     return any(available_levels.values())
 
-class WordMeaningManager:
-    def __init__(self, filename):
-        self.meanings = {}
-        self._load(filename)
-
-    def _load(self, filename):
-        try:
-            df = pd.read_csv(filename, encoding='utf-8-sig').astype(str).replace('nan', '')
-            for _, row in df.iterrows():
-                word = str(row.get('단어', '')).strip()
-                meaning = str(row.get('뜻', '')).strip()
-                if word:
-                    self.meanings[word] = meaning
-        except FileNotFoundError:
-            print("오류: 'vocabulary_word_meaning.csv' 파일을 찾을 수 없습니다.")
-
-    def get(self, word):
-        if word is None:
-            return ""
-        return self.meanings.get(str(word).strip(), "")
 
 word_meaning_manager = WordMeaningManager(os.path.join(base_path, "data", "vocabulary_word_meaning.csv"))
 
-class ItemManager:
-    def __init__(self, filename="player_items.csv"):
-        """
-        아이템 관리자를 초기화합니다.
-        - filename: 아이템 소유 및 착용 정보를 저장할 CSV 파일 이름
-        """
-        self.filename = filename
-        self.item_data = None
-        self._load_items()
 
-    def _load_items(self):
-        """
-        CSV 파일에서 아이템 정보를 로드합니다.
-        파일이 없으면, 기본 아이템 목록으로 새로 생성합니다.
-        """
-        if os.path.exists(self.filename):
-            self.item_data = pd.read_csv(self.filename)
-        else:
-            print(f"'{self.filename}' 파일이 없어 새로 생성합니다.")
-            default_items = {
-                'item_name': ['sunflower', 'glasses'], # 아이템의 고유한 이름
-                'category':  ['hat', 'glasses'], # 아이템 종류 (같은 종류는 중복 착용 불가)
-                'purchased': [False, False],        # 구매 상태 (기본셔츠는 기본 제공)
-                'equipped':  [False, False],
-                'price': [25,30]          # 아이템 가격
-            }
-            self.item_data = pd.DataFrame(default_items)
-            self._save_items()
-    
-    def get_item_price(self, item_name):
-        """
-        특정 아이템의 가격을 가져옵니다.
-        - item_name: 가격을 알고 싶은 아이템의 이름
-        - 반환값: 가격(정수), 아이템이 없으면 -1 또는 None
-        """
-        # 1. 아이템 이름이 데이터에 있는지 확인
-        if item_name not in self.item_data['item_name'].values:
-            print(f"정보 없음: '{item_name}' 아이템을 찾을 수 없습니다.")
-            return -1 # 오류를 의미하는 값 반환
-
-        # === 핵심 로직: 불리언 인덱싱 ===
-        # 2. 'item_name' 컬럼의 값이 item_name과 일치하는 행(row)을 찾는다.
-        item_row = self.item_data[self.item_data['item_name'] == item_name]
-        
-        # 3. 그 행에서 'price' 컬럼의 값을 추출한다.
-        # .iloc[0]은 찾은 행들 중 첫 번째 행의 값을 가져온다는 의미입니다.
-        price = item_row['price'].iloc[0]
-        
-        return int(price)
-
-    def _save_items(self):
-        """ 현재 아이템 정보를 CSV 파일에 저장합니다. """
-        self.item_data.to_csv(self.filename, index=False)
-        print(f"아이템 정보가 '{self.filename}' 파일에 저장되었습니다.")
-
-    def purchase_item(self, item_name):
-        """ 특정 아이템을 구매 처리합니다. (수정된 버전) """
-        # 1. 아이템 존재 여부 확인
-        if item_name not in self.item_data['item_name'].values:
-            print(f"오류: '{item_name}'은(는) 존재하지 않는 아이템입니다.")
-            return False
-
-        # 2. 아이템 가격과 현재 보유 도토리 확인
-        item_price = self.get_item_price(item_name)
-        current_dotori = load_dotori_count()
-
-        # 3. 도토리가 충분한지 '확인'만 합니다. (차감은 아직 안 함)
-        if current_dotori < item_price:
-            print(f"오류: 도토리가 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
-            return False
-
-        # 4. 모든 조건이 통과되었으므로, 실제 구매 절차 진행
-        # 4-1. 아이템 구매 상태 변경
-        item_index = self.item_data[self.item_data['item_name'] == item_name].index
-        self.item_data.loc[item_index, 'purchased'] = True
-        self._save_items() # CSV 파일에 구매 상태 저장
-
-        # 4-2. 도토리 차감 (use_dotori 함수를 딱 한 번만 호출)
-        use_dotori(item_price)
-
-        print(f"'{item_name}' 아이템을 구매했습니다! (도토리 {item_price}개 사용)")
-        return True
-
-    def purchase_item(self, item_name):
-        """ 특정 아이템을 구매만 처리합니다. (수정된 최종 버전) """
-        # 1. 아이템 존재 여부 확인
-        if item_name not in self.item_data['item_name'].values:
-            print(f"오류: '{item_name}'은(는) 존재하지 않는 아이템입니다.")
-            return False
-
-        # 2. 이미 구매한 아이템인지 확인
-        if self.is_purchased(item_name):
-            print(f"정보: '{item_name}'은(는) 이미 구매한 아이템입니다.")
-            return False
-
-        # 3. 아이템 가격과 현재 보유 도토리 확인
-        item_price = self.get_item_price(item_name)
-        current_dotori = load_dotori_count()
-
-        # 4. 도토리가 충분한지 확인
-        if current_dotori < item_price:
-            print(f"오류: 도토리가 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
-            return False
-
-        # 5. 모든 조건 통과 -> 구매 절차 진행
-        # 5-1. 도토리 차감
-        use_dotori(item_price)
-
-        # 5-2. 아이템 구매 상태를 True로 변경
-        item_index = self.item_data[self.item_data['item_name'] == item_name].index
-        self.item_data.loc[item_index, 'purchased'] = True
-        
-        # 5-3. 변경된 내용을 파일에 저장
-        self._save_items()
-        
-        print(f"'{item_name}' 아이템을 구매했습니다! (도토리 {item_price}개 사용)")
-
-        # [핵심 수정] 구매 시 자동으로 착용하던 equip_item() 호출 부분을 삭제했습니다.
-        # 이제 구매만 하고 착용은 하지 않습니다.
-        
-        return True
-    
-    def equip_item(self, item_name):
-        if item_name not in self.item_data['item_name'].values:
-            print(f"오류: '{item_name}'은(는) 존재하지 않는 아이템입니다.")
-            return False
-        
-        item_index = self.item_data[self.item_data['item_name'] == item_name].index
-        self.item_data.loc[item_index, 'equipped'] = True
-        self._save_items()
-
-        print(f"'{item_name}' 아이템을 착용했습니다.")
-        return False
-
-    def unequip_item(self, item_name):
-        """ 특정 아이템을 착용 해제합니다. """
-        if item_name not in self.item_data['item_name'].values:
-            print(f"오류: '{item_name}'은(는) 존재하지 않는 아이템입니다.")
-            return False
-        
-        item_index = self.item_data[self.item_data['item_name'] == item_name].index
-        self.item_data.loc[item_index, 'equipped'] = False
-        self._save_items()
-        print(f"'{item_name}' 아이템을 착용 해제했습니다.")
-        return True
-
-    def is_purchased(self, item_name):
-        """ 특정 아이템의 구매 여부를 확인합니다. """
-        if item_name not in self.item_data['item_name'].values: return False
-        status = self.item_data[self.item_data['item_name'] == item_name]['purchased'].iloc[0]
-        return bool(status)
-
-    def is_equipped(self, item_name):
-        """ 특정 아이템의 착용 여부를 확인합니다. """
-        if item_name not in self.item_data['item_name'].values: return False
-        status = self.item_data[self.item_data['item_name'] == item_name]['equipped'].iloc[0]
-        return bool(status)
-
-    def get_equipped_items(self):
-        """ 현재 착용 중인 모든 아이템의 리스트를 반환합니다. """
-        equipped_df = self.item_data[self.item_data['equipped'] == True]
-        return equipped_df['item_name'].tolist()
-        
-    def get_all_items_status(self):
-        """ 모든 아이템의 전체 상태를 리스트-딕셔너리 형태로 반환합니다. """
-        return self.item_data.to_dict('records')
-
+# 전역 변수로 아이템 매니저 인스턴스 생성
 IM = ItemManager()
 
-DOTORI_FILE = "dotori_count.txt"
-dotori_obtained = False  # 도토리 획득 여부 전역 변수로 추가
- # 초기화
 
-def save_dotori_count(count=0):
-    global dotori_obtained
-    dotori_obtained = True  # 도토리 획득 여부 (필요 시 로직 추가)
-    with open(DOTORI_FILE, 'w') as f:
-        f.write(str(count))
-if not os.path.exists(DOTORI_FILE):
-    save_dotori_count()  # 초기 도토리 수 설정
-def use_dotori(count):
-    global dotori_obtained
-    current_count = load_dotori_count()
-    if count > current_count:
-        print("오류: 사용하려는 도토리 수가 보유 도토리 수보다 많습니다.")
-        return False
-    dotori_obtained = True  # 도토리 사용 여부 (필요 시 로직 추가)
-    new_count = current_count - count
-    with open(DOTORI_FILE, 'w') as f:
-        f.write(str(new_count))
-    return True
-
-def load_dotori_count():
-    try:
-        with open(DOTORI_FILE, 'r') as f:
-            return int(f.read())
-    except (FileNotFoundError, ValueError):
-        return 0
-
-  # 전역 변수로 아이템 매니저 인스턴스 생성
 # ================
 # 헬퍼 함수
 # ================
@@ -370,82 +72,6 @@ def draw_text_in_container(lines, font, color, surface, container_rect, align="l
 
             y_offset += font.get_height()
 
-# ================
-# Image-aware Button 클래스
-# ================
-class Button:
-    def __init__(self, rect, text=None, color=None, text_color=None, image_path=None):
-        self.rect = pygame.Rect(rect)
-        self.text = text
-        self.base_color = color
-        self.text_color_override = text_color
-        self.image_path = image_path
-        self._image = None
-        if image_path:
-            self._image = self._load_and_scale(image_path)
-
-    def _load_and_scale(self, path):
-        try:
-            if not os.path.exists(path):
-                return None
-            img = pygame.image.load(path).convert_alpha()
-            w, h = self.rect.width, self.rect.height
-            iw, ih = img.get_width(), img.get_height()
-            # 비율 유지하여 맞추기
-            if ih/iw >= h/w:
-                # 이미지가 세로로 긴 경우: 높이에 맞추고 너비는 비율대로
-                target_h = h
-                target_w = max(1, int(iw / ih * target_h))
-            else:
-                target_w = w
-                target_h = max(1, int(ih / iw * target_w))
-            scaled = pygame.transform.smoothscale(img, (target_w, target_h))
-            return scaled
-        except Exception:
-            return None
-
-    def reload_image(self):
-        if self.image_path:
-            self._image = self._load_and_scale(self.image_path)
-
-    def draw(self, surface):
-        # 배경 사각형 (이미지 없을 때의 대체)
-        color = self.base_color if self.base_color else COLORS['ui_accent']
-        text_color = self.text_color_override if self.text_color_override else COLORS['text']
-        if self._image:
-            # 이미지가 버튼보다 작다면 가운데 정렬
-            img = self._image
-            img_rect = img.get_rect(center=self.rect.center)
-            surface.blit(img, img_rect)
-            # 이미지 위 텍스트 (필요 시)
-            if self.text:
-                txt = font_tiny.render(self.text, True, text_color)
-                surface.blit(txt, txt.get_rect(center=self.rect.center))
-        else:
-            # 기본 렌더
-            pygame.draw.rect(surface, color, self.rect, border_radius=8)
-            if self.text:
-                padding = 8
-                target_rect = self.rect.inflate(-padding, -padding)
-                current_font = font_small
-                text_surface = current_font.render(self.text, True, text_color)
-                if text_surface.get_width() > target_rect.width:
-                    current_font = font_tiny
-                    text_surface = current_font.render(self.text, True, text_color)
-                surface.blit(text_surface, text_surface.get_rect(center=self.rect.center))
-
-    def transparent_draw(self, surface, border_radius=-1):
-        # 디버그용 테두리 표시
-        #pygame.draw.rect(surface, (255, 0, 0), self.rect, width=1, border_radius=border_radius)
-
-        color = self.base_color if self.base_color else COLORS['ui_accent']
-        text_color = self.text_color_override if self.text_color_override else COLORS['text']
-        if self.text:
-            txt = font_tiny.render(self.text, True, text_color)
-            surface.blit(txt, txt.get_rect(center=self.rect.center))
-
-    def is_clicked(self, pos):
-        return self.rect.collidepoint(pos)
 
 # ================
 # 퀴즈 로직 상태 변수
