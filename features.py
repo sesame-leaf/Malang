@@ -68,8 +68,8 @@ class Button:
                 surface.blit(text_surface, text_surface.get_rect(center=self.rect.center))
 
     def transparent_draw(self, surface, border_radius=-1):
-        # 디버그용 테두리 표시
-        pygame.draw.rect(surface, (255, 0, 0), self.rect, width=1, border_radius=border_radius)
+        #디버그용 버튼 경계 표시
+        #pygame.draw.rect(surface, (255, 0, 0), self.rect, width=1, border_radius=border_radius)
 
         color = self.base_color if self.base_color else COLORS['ui_accent']
         text_color = self.text_color_override if self.text_color_override else COLORS['text']

@@ -4,6 +4,7 @@ import pygame
 import features
 from features import base_path
 from ast import literal_eval
+import math
 
 def safe_load_and_scale(path, target_size ):
     try:
@@ -71,12 +72,14 @@ class Item:
         return self.rect.collidepoint(pos)
     
     def is_purchased(self):
+        
         wh = pygame.Surface((self.itemIcon.get_width(),Item.dotoriImgWidth))
         wh.fill((255,255,255))
         self.superScreen.blit(wh,(self.rect.x,self.rect.y+self.itemIcon.get_height()))
         self.superScreen.blit(put_on_img,(self.rect.x+(self.itemIcon.get_width()-put_on_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-put_on_img.get_height())/2+2))
     
     def is_equipped(self):
+        
         wh = pygame.Surface((self.itemIcon.get_width(),Item.dotoriImgWidth))
         wh.fill((255,255,255))
         self.superScreen.blit(wh,(self.rect.x,self.rect.y+self.itemIcon.get_height()))
@@ -215,22 +218,23 @@ class ItemManager:
         if current_dotori < item_price:
             print(f"오류: 도토리가 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
             return False
-
+        else:
         # 5. 모든 조건 통과 -> 구매 절차 진행
         # 5-1. 도토리 차감
-        use_dotori(item_price)
-        item.is_purchased()
+            use_dotori(item_price)
+            item.is_purchased()
+            item.purchased = True
 
         # 5-2. 아이템 구매 상태를 True로 변경
-        item_index = self.item_data[self.item_data['item_name'] == item.name].index
-        self.item_data.loc[item_index, 'purchased'] = True
+            item_index = self.item_data[self.item_data['item_name'] == item.name].index
+            self.item_data.loc[item_index, 'purchased'] = True
 
         
         
         # 5-3. 변경된 내용을 파일에 저장
-        self._save_items()
+            self._save_items()
         
-        print(f"'{item.name}' 아이템을 구매했습니다! (도토리 {item_price}개 사용)")
+            print(f"'{item.name}' 아이템을 구매했습니다! (도토리 {item_price}개 사용)")
 
         # [핵심 수정] 구매 시 자동으로 착용하던 equip_item() 호출 부분을 삭제했습니다.
         # 이제 구매만 하고 착용은 하지 않습니다.
@@ -289,7 +293,7 @@ class ItemManager:
         # **Item 객체 업데이트 로직:**
         for item_obj in self.item_class_list:
             if item_obj.category == item.category:
-                if item_obj.name != item.name:
+                if item_obj.name != item.name and item_obj.purchased == True:
                     # 같은 카테고리이지만 현재 착용하는 아이템이 아닌 경우 -> 착용 해제 상태로 변경
                     item_obj.equipped = False # 객체 상태 업데이트
                     item_obj.is_purchased()  # 화면에 'PUT ON' 버튼으로 다시 그리기
@@ -340,8 +344,15 @@ class ItemManager:
         return self.item_data.to_dict('records')
     
     def scrollSurface(self,broad_category):
-        scrollSurface = pygame.Surface((350, (90+Item.dotoriImgWidth+15)*(len(self.item_data.index)//3+1)),pygame.SRCALPHA)
         df = self.item_data[self.item_data['broad_category'] == broad_category]
+        rows = (len(df.index) - 1) // 3 + 1
+        
+# [중요] 높이 계산 시 int()로 감싸기
+        height = int(20 + (90 + Item.dotoriImgWidth * 1.2) * rows)
+
+# 2. 높이 계산 (마지막에 int로 감싸서 확실하게 정수로 만듦)
+        
+        scrollSurface = pygame.Surface((350, height),pygame.SRCALPHA)
         for i in range(len(df)):
 
             row = df.iloc[i]
