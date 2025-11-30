@@ -550,9 +550,12 @@ while running:
                 elif setting_btn.is_clicked(pos):
                     scene = "settings"
             # 공통 뒤로가기
-            if scene in ["social_vs", "settings", "practice_level_selection", "practice_test_selection", "quiz_results", "ranking", "my_home","my_room"]:
+            if scene in ["social_vs", "settings", "practice_level_selection", "practice_test_selection", "quiz_results", "ranking", "my_home"]:
                 if back_btn.is_clicked(pos):
                     scene = "main_menu"
+            elif scene == "my_room":
+                if back_btn.is_clicked(pos):
+                    scene = "my_home"
             # 연습 레벨 선택
             if scene == "practice_level_selection":
                 for i, btn in enumerate(level_buttons):
