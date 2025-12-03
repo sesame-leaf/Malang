@@ -38,7 +38,13 @@ ASSET_PATHS = {
     "room_bg": os.path.join(base_path, "assets", "room_bg.png"),
     "social_vs_bg": os.path.join(base_path, "assets", "social_vs_bg.png"),
     "my_room_bg": os.path.join(base_path, "assets", "my_room_bg.png"),
+    "body_button": os.path.join(base_path, "assets", "body_button.png"),
+    "face_button": os.path.join(base_path, "assets", "face_button.png"),
+    "adornment_button": os.path.join(base_path, "assets", "adornment_button.png"),
     "my_home_bg": os.path.join(base_path, "assets", "my_home_bg.png"),
+    "furniture_button": os.path.join(base_path, "assets", "furniture_button.png"),
+    "flooring_button": os.path.join(base_path, "assets", "flooring_button.png"),
+    "wallpaper_button": os.path.join(base_path, "assets", "wallpaper_button.png"),
     "ranking_bg": os.path.join(base_path, "assets", "ranking_bg.png"),
     "pick_a_word_bg": os.path.join(base_path, "assets", "pick_a_word_bg.png"),
     "select_the_meaning_bg": os.path.join(base_path, "assets", "select_the_meaning_bg.png"),
@@ -155,7 +161,7 @@ def use_dotori(count):
     global dotori_obtained
     current_count = load_dotori_count()
     if count > current_count:
-        print("오류: 사용하려는 도토리 수가 보유 도토리 수보다 많습니다.")
+        print("오류: 사용하려는 해바라기씨앗 수가 보유 해바라기씨앗 수보다 많습니다.")
         return False
     dotori_obtained = True  # 도토리 사용 여부 (필요 시 로직 추가)
     new_count = current_count - count
@@ -333,7 +339,13 @@ select_the_meaning_bg = safe_load_and_scale(ASSET_PATHS.get("select_the_meaning_
 my_room_bg = pygame.image.load(ASSET_PATHS.get("my_room_bg")).convert()
 my_room_bg = pygame.transform.smoothscale(my_room_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
 my_room_bg.set_colorkey((255,255,255), pygame.RLEACCEL)
+body_btn_img = safe_load_and_scale(ASSET_PATHS.get("body_button"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+face_btn_img = safe_load_and_scale(ASSET_PATHS.get("face_button"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+Adornment_btn_img = safe_load_and_scale(ASSET_PATHS.get("adornment_button"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 my_home_bg = safe_load_and_scale(ASSET_PATHS.get("my_home_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+furniture_btn_img = safe_load_and_scale(ASSET_PATHS.get("furniture_button"), (SCREEN_WIDTH, SCREEN_WIDTH*0.153))
+flooring_btn_img = safe_load_and_scale(ASSET_PATHS.get("flooring_button"), (SCREEN_WIDTH, SCREEN_WIDTH*0.152))
+wallpaper_btn_img = safe_load_and_scale(ASSET_PATHS.get("wallpaper_button"), (SCREEN_WIDTH, SCREEN_WIDTH*1.08))
 hamster_with_glasses = safe_load_and_scale(ASSET_PATHS.get("hamster_with_glasses"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 hamster_with_sunflower = safe_load_and_scale(ASSET_PATHS.get("hamster_with_sunflower"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 hamster_with_glasses_and_sunflower = safe_load_and_scale(ASSET_PATHS.get("hamster_with_glasses,sunflower"), (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -346,12 +358,13 @@ char_default_img = safe_load_and_scale(ASSET_PATHS.get("char_default"), (160, 20
 check_icon_img = safe_load_and_scale(ASSET_PATHS.get("check_icon"), (31, 31))
 x_icon_img = safe_load_and_scale(ASSET_PATHS.get("x_icon"), (33, 27))
 next_question_btn_img = safe_load_and_scale(ASSET_PATHS.get("next_question_btn"),(126,42))
-furnitureScrollSurface = IM.scrollSurface('furniture')
 wallpaperScrollSurface = IM.scrollSurface('wallpaper')
 flooringScrollSurface = IM.scrollSurface('flooring')
+furnitureScrollSurface = IM.scrollSurface('furniture')
 AdornmentScrollSurface = IM.scrollSurface('Adornment')
 bodyScrollSurface = IM.scrollSurface('body')
 faceScrollSurface = IM.scrollSurface('face')
+homeSurface = IM.home_surface()
 # ================
 # 상태 및 버튼 정의 (이미지 경로 지정 가능)
 # ================
@@ -531,6 +544,7 @@ while running:
                             IM.unequip_item(item)
                         else:
                             IM.equip_item(item)
+                        homeSurface = IM.home_surface()
                         
             is_dragging = False
         
@@ -748,6 +762,9 @@ while running:
         back_btn_my_room.transparent_draw(screen)
         equipped =  IM.get_equipped_items()
         screen.blit(my_room_bg,(0,0))
+        screen.blit(eval(f"{category_in_room}_btn_img"),(0,0))
+        
+        
         screen.blit(updateHamster,(175-updateHamster.get_width()/2,148))
         
         for i in nav_btn_in_room:
@@ -788,9 +805,18 @@ while running:
         screen.blit(flushing_price_img, (8,SCREEN_HEIGHT-40))'''
     
     elif scene == "my_home":
+        screen.blit(homeSurface,(0,0))
         screen.blit(my_home_bg,(0,0))
         screen.blit(updateHamster_in_home,(175-updateHamster_in_home.get_width()/2,220))
         screen.blit(category_surf_in_home,(0,537),area=(0,scroll_offset_y,350,170))
+        if category_in_home == 'furniture':
+            screen.blit(eval(f"{category_in_home}_btn_img"),(0,485))
+        if category_in_home == 'wallpaper':
+            screen.blit(eval(f"{category_in_home}_btn_img"),(0,299))
+        if category_in_home == 'flooring':
+            screen.blit(eval(f"{category_in_home}_btn_img"),(0,485))
+        
+        
         back_btn.transparent_draw(screen)
         from_home_to_room.transparent_draw(screen)
         rect = pygame.Rect(280, 25, 40, 22)

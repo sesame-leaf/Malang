@@ -25,6 +25,16 @@ lay_off_img = safe_load_and_scale(os.path.join(base_path,'assets',"lay_off.png")
 put_on_img = safe_load_and_scale(os.path.join(base_path,'assets',"put_on.png"), (52,13))
 using_img = safe_load_and_scale(os.path.join(base_path,'assets',"using.png"), (39, 13))
 change_img = safe_load_and_scale(os.path.join(base_path,'assets',"change.png"), (52, 13))
+cozy_yellow_square = pygame.Surface((103, 103), pygame.SRCALPHA)
+
+# 2. 더 밝은 노란색 설정 (레몬색에 가까움)
+# (255, 255, 180): 아주 밝고 환한 노란색
+# (255, 245, 100): 쨍하고 선명한 노란색
+bright_yellow = (200, 200, 200) 
+
+# 3. 둥근 사각형 그리기
+# border_radius=20: 이 숫자가 클수록 더 둥글둥글해집니다 (최대 51까지 가능)
+pygame.draw.rect(cozy_yellow_square, bright_yellow, cozy_yellow_square.get_rect(), border_radius=10)
 
 
 class Item:
@@ -40,6 +50,22 @@ class Item:
         self.equipped = equipped
         self.price = price
         self.itemIcon = safe_load_and_scale(os.path.join(base_path,'assets',itemIcon_path), (103, 103))
+        if broad_category in ['furniture']:
+            new = cozy_yellow_square.copy()
+            new.blit(self.itemIcon,(0,0))
+            self.itemIcon = new
+        elif broad_category in ['flooring','wallpaper']:
+            smooth_surface = pygame.transform.smoothscale(self.itemIcon, (70, 70))
+            new = cozy_yellow_square.copy()
+            # 1. 작은 서피스(붙일 것)의 사각형 정보를 가져옵니다.
+            rect = smooth_surface.get_rect()
+
+            # 2. 그 사각형의 중심(center)을 배경 서피스 사각형의 중심에 맞춥니다.
+            rect.center = new.get_rect().center
+
+            # 3. 그 위치(rect)에 그립니다.
+            new.blit(smooth_surface, rect)
+            self.itemIcon = new
         self.realItemImage = safe_load_and_scale(os.path.join(base_path,'assets',realItem_path), target_size)
         #self.realItemImage.set_colorkey((255,255,255),pygame.RLEACCEL)
         self.target_pos = target_pos
@@ -105,6 +131,7 @@ class ItemManager:
         self.item_data = []
 
         self.item_class_list = []
+        self.hamster_surface = None
 
         self._load_items()
         self.item_data['target_pos'] = self.item_data['target_pos'].apply(literal_eval)
@@ -164,7 +191,7 @@ class ItemManager:
         hamster_surface = body_obj.realItemImage.copy()
         
         # 크기를 HAMSTER_SIZE로 통일해야 한다면 (혹시 로드 시 크기가 다를 경우)
-        HAMSTER_SIZE = (150,150)
+        HAMSTER_SIZE = (300,300)
         #if hamster_surface.get_size() != HAMSTER_SIZE:
         #    hamster_surface = pygame.transform.smoothscale(hamster_surface, HAMSTER_SIZE)
 
@@ -177,9 +204,26 @@ class ItemManager:
                 # 덧씌우기 전에 크기가 맞는지 확인 (이미 Item.__init__에서 로드 시 크기가 맞춰졌다고 가정)
                 
                 hamster_surface.blit(item_img,item_obj.target_pos) 
-                
+        
+        self.hamster_surface = hamster_surface
         return hamster_surface
     
+    def home_surface(self):
+        screen = pygame.Surface((350, 700), pygame.SRCALPHA)
+        equipped_item_objects = []
+        for item_obj in self.item_class_list:
+            if item_obj.equipped and item_obj.broad_category in ['wallpaper','flooring','furniture']:
+                equipped_item_objects.append(item_obj)
+        
+        for item_obj in equipped_item_objects:
+            item_img = item_obj.realItemImage
+            
+            if item_img:
+                # 덧씌우기 전에 크기가 맞는지 확인 (이미 Item.__init__에서 로드 시 크기가 맞춰졌다고 가정)
+                
+                screen.blit(item_img,item_obj.target_pos) 
+        
+        return screen
     def get_item_price(self, item_name):
         """
         특정 아이템의 가격을 가져옵니다.
@@ -224,7 +268,7 @@ class ItemManager:
 
         # 4. 도토리가 충분한지 확인
         if current_dotori < item_price:
-            print(f"오류: 도토리가 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
+            print(f"오류: 해바라기씨앗이 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
             return False
         else:
         # 5. 모든 조건 통과 -> 구매 절차 진행
@@ -242,7 +286,7 @@ class ItemManager:
         # 5-3. 변경된 내용을 파일에 저장
             self._save_items()
         
-            print(f"'{item.name}' 아이템을 구매했습니다! (도토리 {item_price}개 사용)")
+            print(f"'{item.name}' 아이템을 구매했습니다! (해바라기씨앗 {item_price}개 사용)")
 
         # [핵심 수정] 구매 시 자동으로 착용하던 equip_item() 호출 부분을 삭제했습니다.
         # 이제 구매만 하고 착용은 하지 않습니다.
@@ -389,6 +433,8 @@ class ItemManager:
             
         return scrollSurface
 
+
+
 DOTORI_FILE = "dotori_count.txt"
 dotori_obtained = False  # 도토리 획득 여부 전역 변수로 추가
  # 초기화
@@ -404,7 +450,7 @@ def use_dotori(count):
     global dotori_obtained
     current_count = load_dotori_count()
     if count > current_count:
-        print("오류: 사용하려는 도토리 수가 보유 도토리 수보다 많습니다.")
+        print("오류: 사용하려는 해바라기씨앗 수가 보유 해바라기씨앗 수보다 많습니다.")
         return False
     dotori_obtained = True  # 도토리 사용 여부 (필요 시 로직 추가)
     new_count = current_count - count
