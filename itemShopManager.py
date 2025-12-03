@@ -4,6 +4,7 @@ import pygame
 import features
 from features import base_path
 from ast import literal_eval
+import math
 
 def safe_load_and_scale(path, target_size ):
     try:
@@ -20,9 +21,20 @@ def safe_load_and_scale(path, target_size ):
         print("---------------------------------")
         return None
 
-lay_off_img = safe_load_and_scale(os.path.join(base_path,'assets',"lay_off.png"), (60, 15))
-put_on_img = safe_load_and_scale(os.path.join(base_path,'assets',"put_on.png"), (60,15))
+lay_off_img = safe_load_and_scale(os.path.join(base_path,'assets',"lay_off.png"), (52, 13))
+put_on_img = safe_load_and_scale(os.path.join(base_path,'assets',"put_on.png"), (52,13))
+using_img = safe_load_and_scale(os.path.join(base_path,'assets',"using.png"), (39, 13))
+change_img = safe_load_and_scale(os.path.join(base_path,'assets',"change.png"), (52, 13))
+cozy_yellow_square = pygame.Surface((103, 103), pygame.SRCALPHA)
 
+# 2. 더 밝은 노란색 설정 (레몬색에 가까움)
+# (255, 255, 180): 아주 밝고 환한 노란색
+# (255, 245, 100): 쨍하고 선명한 노란색
+bright_yellow = (200, 200, 200) 
+
+# 3. 둥근 사각형 그리기
+# border_radius=20: 이 숫자가 클수록 더 둥글둥글해집니다 (최대 51까지 가능)
+pygame.draw.rect(cozy_yellow_square, bright_yellow, cozy_yellow_square.get_rect(), border_radius=10)
 
 
 class Item:
@@ -37,7 +49,23 @@ class Item:
         self.purchased = purchased
         self.equipped = equipped
         self.price = price
-        self.itemIcon = safe_load_and_scale(os.path.join(base_path,'assets',itemIcon_path), (90, 90))
+        self.itemIcon = safe_load_and_scale(os.path.join(base_path,'assets',itemIcon_path), (103, 103))
+        if broad_category in ['furniture']:
+            new = cozy_yellow_square.copy()
+            new.blit(self.itemIcon,(0,0))
+            self.itemIcon = new
+        elif broad_category in ['flooring','wallpaper']:
+            smooth_surface = pygame.transform.smoothscale(self.itemIcon, (70, 70))
+            new = cozy_yellow_square.copy()
+            # 1. 작은 서피스(붙일 것)의 사각형 정보를 가져옵니다.
+            rect = smooth_surface.get_rect()
+
+            # 2. 그 사각형의 중심(center)을 배경 서피스 사각형의 중심에 맞춥니다.
+            rect.center = new.get_rect().center
+
+            # 3. 그 위치(rect)에 그립니다.
+            new.blit(smooth_surface, rect)
+            self.itemIcon = new
         self.realItemImage = safe_load_and_scale(os.path.join(base_path,'assets',realItem_path), target_size)
         #self.realItemImage.set_colorkey((255,255,255),pygame.RLEACCEL)
         self.target_pos = target_pos
@@ -62,6 +90,7 @@ class Item:
             self.is_purchased()
         else:
             self.is_equipped()
+        #디버그용 버튼 테두리 표시
         #pygame.draw.rect(self.superScreen, (111,111,111),self.rect, width=1)
         
         
@@ -71,21 +100,29 @@ class Item:
         return self.rect.collidepoint(pos)
     
     def is_purchased(self):
+        
         wh = pygame.Surface((self.itemIcon.get_width(),Item.dotoriImgWidth))
         wh.fill((255,255,255))
         self.superScreen.blit(wh,(self.rect.x,self.rect.y+self.itemIcon.get_height()))
-        self.superScreen.blit(put_on_img,(self.rect.x+(self.itemIcon.get_width()-put_on_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-put_on_img.get_height())/2+2))
+        if self.broad_category not in ['wallpaper','body','flooring']:
+            self.superScreen.blit(put_on_img,(self.rect.x+(self.itemIcon.get_width()-put_on_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-put_on_img.get_height())/2+2))
+        else:
+            self.superScreen.blit(change_img,(self.rect.x+(self.itemIcon.get_width()-change_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-change_img.get_height())/2+2))
     
     def is_equipped(self):
+        
         wh = pygame.Surface((self.itemIcon.get_width(),Item.dotoriImgWidth))
         wh.fill((255,255,255))
         self.superScreen.blit(wh,(self.rect.x,self.rect.y+self.itemIcon.get_height()))
-        self.superScreen.blit(lay_off_img,(self.rect.x+(self.itemIcon.get_width()-put_on_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-put_on_img.get_height())/2+2))
+        if self.broad_category not in ['wallpaper','body','flooring']:
+            self.superScreen.blit(lay_off_img,(self.rect.x+(self.itemIcon.get_width()-lay_off_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-lay_off_img.get_height())/2+2))
+        else:
+            self.superScreen.blit(using_img,(self.rect.x+(self.itemIcon.get_width()-using_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-using_img.get_height())/2+2))
 
 
 
 class ItemManager:
-    def __init__(self, filename="player_items.csv"):
+    def __init__(self, filename="data/player_items.csv"):
         """
         아이템 관리자를 초기화합니다.
         - filename: 아이템 소유 및 착용 정보를 저장할 CSV 파일 이름
@@ -94,6 +131,7 @@ class ItemManager:
         self.item_data = []
 
         self.item_class_list = []
+        self.hamster_surface = None
 
         self._load_items()
         self.item_data['target_pos'] = self.item_data['target_pos'].apply(literal_eval)
@@ -131,7 +169,7 @@ class ItemManager:
         # 1. 착용 중인 모든 아이템 객체 찾기
         equipped_item_objects = []
         for item_obj in self.item_class_list:
-            if item_obj.equipped:
+            if item_obj.equipped and item_obj.broad_category in ['body','face','Adornment']:
                 equipped_item_objects.append(item_obj)
         
         # 2. 기본 몸체 서피스 (body 카테고리) 찾기
@@ -153,7 +191,7 @@ class ItemManager:
         hamster_surface = body_obj.realItemImage.copy()
         
         # 크기를 HAMSTER_SIZE로 통일해야 한다면 (혹시 로드 시 크기가 다를 경우)
-        HAMSTER_SIZE = (150,150)
+        HAMSTER_SIZE = (300,300)
         #if hamster_surface.get_size() != HAMSTER_SIZE:
         #    hamster_surface = pygame.transform.smoothscale(hamster_surface, HAMSTER_SIZE)
 
@@ -166,9 +204,26 @@ class ItemManager:
                 # 덧씌우기 전에 크기가 맞는지 확인 (이미 Item.__init__에서 로드 시 크기가 맞춰졌다고 가정)
                 
                 hamster_surface.blit(item_img,item_obj.target_pos) 
-                
+        
+        self.hamster_surface = hamster_surface
         return hamster_surface
     
+    def home_surface(self):
+        screen = pygame.Surface((350, 700), pygame.SRCALPHA)
+        equipped_item_objects = []
+        for item_obj in self.item_class_list:
+            if item_obj.equipped and item_obj.broad_category in ['wallpaper','flooring','furniture']:
+                equipped_item_objects.append(item_obj)
+        
+        for item_obj in equipped_item_objects:
+            item_img = item_obj.realItemImage
+            
+            if item_img:
+                # 덧씌우기 전에 크기가 맞는지 확인 (이미 Item.__init__에서 로드 시 크기가 맞춰졌다고 가정)
+                
+                screen.blit(item_img,item_obj.target_pos) 
+        
+        return screen
     def get_item_price(self, item_name):
         """
         특정 아이템의 가격을 가져옵니다.
@@ -213,24 +268,25 @@ class ItemManager:
 
         # 4. 도토리가 충분한지 확인
         if current_dotori < item_price:
-            print(f"오류: 도토리가 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
+            print(f"오류: 해바라기씨앗이 부족하여 아이템을 구매할 수 없습니다. (필요: {item_price}, 보유: {current_dotori})")
             return False
-
+        else:
         # 5. 모든 조건 통과 -> 구매 절차 진행
         # 5-1. 도토리 차감
-        use_dotori(item_price)
-        item.is_purchased()
+            use_dotori(item_price)
+            item.is_purchased()
+            item.purchased = True
 
         # 5-2. 아이템 구매 상태를 True로 변경
-        item_index = self.item_data[self.item_data['item_name'] == item.name].index
-        self.item_data.loc[item_index, 'purchased'] = True
+            item_index = self.item_data[self.item_data['item_name'] == item.name].index
+            self.item_data.loc[item_index, 'purchased'] = True
 
         
         
         # 5-3. 변경된 내용을 파일에 저장
-        self._save_items()
+            self._save_items()
         
-        print(f"'{item.name}' 아이템을 구매했습니다! (도토리 {item_price}개 사용)")
+            print(f"'{item.name}' 아이템을 구매했습니다! (해바라기씨앗 {item_price}개 사용)")
 
         # [핵심 수정] 구매 시 자동으로 착용하던 equip_item() 호출 부분을 삭제했습니다.
         # 이제 구매만 하고 착용은 하지 않습니다.
@@ -289,7 +345,7 @@ class ItemManager:
         # **Item 객체 업데이트 로직:**
         for item_obj in self.item_class_list:
             if item_obj.category == item.category:
-                if item_obj.name != item.name:
+                if item_obj.name != item.name and item_obj.purchased == True:
                     # 같은 카테고리이지만 현재 착용하는 아이템이 아닌 경우 -> 착용 해제 상태로 변경
                     item_obj.equipped = False # 객체 상태 업데이트
                     item_obj.is_purchased()  # 화면에 'PUT ON' 버튼으로 다시 그리기
@@ -340,8 +396,15 @@ class ItemManager:
         return self.item_data.to_dict('records')
     
     def scrollSurface(self,broad_category):
-        scrollSurface = pygame.Surface((350, (90+Item.dotoriImgWidth+15)*(len(self.item_data.index)//3+1)),pygame.SRCALPHA)
         df = self.item_data[self.item_data['broad_category'] == broad_category]
+        rows = (len(df.index) - 1) // 3 + 1
+        
+# [중요] 높이 계산 시 int()로 감싸기
+        height = int(10 + (108 + Item.dotoriImgWidth * 1.2) * rows)
+
+# 2. 높이 계산 (마지막에 int로 감싸서 확실하게 정수로 만듦)
+        
+        scrollSurface = pygame.Surface((350, height),pygame.SRCALPHA)
         for i in range(len(df)):
 
             row = df.iloc[i]
@@ -360,8 +423,8 @@ class ItemManager:
             a = Item(name,broad_category, category,purchased,equipped,  price, itemIcon_path,realItem_path,target_pos,target_size)
             
             # 위치 계산 (유저의 원본 로직 유지)
-            x_pos = 20 + (i % 3) * 110
-            y_pos = 10 + (i // 3) * 120
+            x_pos = 10 + (i % 3) * 113
+            y_pos = 10 + (i // 3) * 137
             
             a.make_button(scrollSurface, x_pos, y_pos)
             
@@ -369,6 +432,8 @@ class ItemManager:
             self.item_class_list.append(a)
             
         return scrollSurface
+
+
 
 DOTORI_FILE = "dotori_count.txt"
 dotori_obtained = False  # 도토리 획득 여부 전역 변수로 추가
@@ -385,7 +450,7 @@ def use_dotori(count):
     global dotori_obtained
     current_count = load_dotori_count()
     if count > current_count:
-        print("오류: 사용하려는 도토리 수가 보유 도토리 수보다 많습니다.")
+        print("오류: 사용하려는 해바라기씨앗 수가 보유 해바라기씨앗 수보다 많습니다.")
         return False
     dotori_obtained = True  # 도토리 사용 여부 (필요 시 로직 추가)
     new_count = current_count - count

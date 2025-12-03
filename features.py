@@ -68,8 +68,8 @@ class Button:
                 surface.blit(text_surface, text_surface.get_rect(center=self.rect.center))
 
     def transparent_draw(self, surface, border_radius=-1):
-        # 디버그용 테두리 표시
-        pygame.draw.rect(surface, (255, 0, 0), self.rect, width=1, border_radius=border_radius)
+        #디버그용 버튼 경계 표시
+        #pygame.draw.rect(surface, (255, 0, 0), self.rect, width=1, border_radius=border_radius)
 
         color = self.base_color if self.base_color else COLORS['ui_accent']
         text_color = self.text_color_override if self.text_color_override else COLORS['text']
@@ -83,7 +83,7 @@ class Button:
 # 폰트 로딩 (assets 폴더 사용)
 try:
     FONT_PATH = os.path.join(base_path, "assets", "onkim.ttf")
-    print(FONT_PATH)
+    
     font_large = pygame.font.Font(FONT_PATH, 36)
     font_medium = pygame.font.Font(FONT_PATH, 24)
     font_small = pygame.font.Font(FONT_PATH, 17)
@@ -96,3 +96,7 @@ except Exception:
     except Exception:
         pass
     font_large, font_medium, font_small, font_tiny = [pygame.font.SysFont(None, size) for size in [48, 32, 24, 18]]
+
+'''def create_question_display():
+    os.path.join()
+    return'''

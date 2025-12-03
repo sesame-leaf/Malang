@@ -1,8 +1,0 @@
-item_name,broad_category,category,purchased,equipped,price,itemIcon_path,realItem_path,target_pos,target_size
-defaultHamster,body,body,True,False,0,defaultHamster_icon.png,defaultHamster.png,"(120, 250)","(300, 300)"
-stripeHamster,body,body,True,True,70,stripeHamster_icon.png,stripeHamster.png,"(100, 100)","(300, 300)"
-grayHamster,body,body,True,False,70,grayHamster_icon.png,grayHamster.png,"(100, 100)","(300, 300)"
-sunflower,Adornment,flower,True,True,25,sunflower_icon.png,sunflower.png,"(0, 0)","(300, 300)"
-bolddagu,Adornment,bol,True,True,25,bolddagu_icon.png,bolddagu.png,"(0, 0)","(300, 300)"
-glasses,Adornment,glasses,True,True,30,glasses_icon.png,glasses.png,"(0, 0)","(300, 300)"
-check,Adornment,check,True,False,33,check_img.png,check_img.png,"(100, 100)","(300, 300)"

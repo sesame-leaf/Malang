@@ -38,12 +38,19 @@ ASSET_PATHS = {
     "room_bg": os.path.join(base_path, "assets", "room_bg.png"),
     "social_vs_bg": os.path.join(base_path, "assets", "social_vs_bg.png"),
     "my_room_bg": os.path.join(base_path, "assets", "my_room_bg.png"),
+    "body_button": os.path.join(base_path, "assets", "body_button.png"),
+    "face_button": os.path.join(base_path, "assets", "face_button.png"),
+    "adornment_button": os.path.join(base_path, "assets", "adornment_button.png"),
     "my_home_bg": os.path.join(base_path, "assets", "my_home_bg.png"),
+    "furniture_button": os.path.join(base_path, "assets", "furniture_button.png"),
+    "flooring_button": os.path.join(base_path, "assets", "flooring_button.png"),
+    "wallpaper_button": os.path.join(base_path, "assets", "wallpaper_button.png"),
     "ranking_bg": os.path.join(base_path, "assets", "ranking_bg.png"),
     "pick_a_word_bg": os.path.join(base_path, "assets", "pick_a_word_bg.png"),
     "select_the_meaning_bg": os.path.join(base_path, "assets", "select_the_meaning_bg.png"),
     "check_icon": os.path.join(base_path, "assets", "check_img.png"),
     "x_icon": os.path.join(base_path, "assets", "x_icon.png"),
+    "next_question_btn": os.path.join(base_path,"assets","next_question_btn.png"),
     "char_default": os.path.join(base_path, "assets", "char_default.png"),
     "item_shirt": os.path.join(base_path, "assets", "item_shirt.png"),
     "item_pants": os.path.join(base_path, "assets", "item_pants.png"),
@@ -154,7 +161,7 @@ def use_dotori(count):
     global dotori_obtained
     current_count = load_dotori_count()
     if count > current_count:
-        print("오류: 사용하려는 도토리 수가 보유 도토리 수보다 많습니다.")
+        print("오류: 사용하려는 해바라기씨앗 수가 보유 해바라기씨앗 수보다 많습니다.")
         return False
     dotori_obtained = True  # 도토리 사용 여부 (필요 시 로직 추가)
     new_count = current_count - count
@@ -306,7 +313,7 @@ def prepare_current_question():
     for option in options:
         button_rect = (side_margin, current_y, content_width, button_height)
         # 여기서 이미지 기반 버튼으로 생성 (퀴즈 선택지도 이미지로 대체 가능)
-        btn = Button(button_rect, option, image_path=ASSET_PATHS.get("quiz_option"))
+        btn = Button(button_rect, option,  image_path=ASSET_PATHS.get("quiz_option"))
         answer_buttons.append(btn)
         current_y += button_height + button_gap
 
@@ -329,8 +336,16 @@ main_menu_bg = safe_load_and_scale(ASSET_PATHS.get("main_menu_bg"), (SCREEN_WIDT
 social_vs_bg = safe_load_and_scale(ASSET_PATHS.get("social_vs_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 pick_a_word_bg = safe_load_and_scale(ASSET_PATHS.get("pick_a_word_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 select_the_meaning_bg = safe_load_and_scale(ASSET_PATHS.get("select_the_meaning_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
-my_room_bg = safe_load_and_scale(ASSET_PATHS.get("my_room_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+my_room_bg = pygame.image.load(ASSET_PATHS.get("my_room_bg")).convert()
+my_room_bg = pygame.transform.smoothscale(my_room_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+my_room_bg.set_colorkey((255,255,255), pygame.RLEACCEL)
+body_btn_img = safe_load_and_scale(ASSET_PATHS.get("body_button"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+face_btn_img = safe_load_and_scale(ASSET_PATHS.get("face_button"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+Adornment_btn_img = safe_load_and_scale(ASSET_PATHS.get("adornment_button"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 my_home_bg = safe_load_and_scale(ASSET_PATHS.get("my_home_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+furniture_btn_img = safe_load_and_scale(ASSET_PATHS.get("furniture_button"), (SCREEN_WIDTH, SCREEN_WIDTH*0.153))
+flooring_btn_img = safe_load_and_scale(ASSET_PATHS.get("flooring_button"), (SCREEN_WIDTH, SCREEN_WIDTH*0.152))
+wallpaper_btn_img = safe_load_and_scale(ASSET_PATHS.get("wallpaper_button"), (SCREEN_WIDTH, SCREEN_WIDTH*1.08))
 hamster_with_glasses = safe_load_and_scale(ASSET_PATHS.get("hamster_with_glasses"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 hamster_with_sunflower = safe_load_and_scale(ASSET_PATHS.get("hamster_with_sunflower"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 hamster_with_glasses_and_sunflower = safe_load_and_scale(ASSET_PATHS.get("hamster_with_glasses,sunflower"), (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -342,8 +357,14 @@ glasses_price_img = safe_load_and_scale(ASSET_PATHS.get("glasses_price"), (100, 
 char_default_img = safe_load_and_scale(ASSET_PATHS.get("char_default"), (160, 200))
 check_icon_img = safe_load_and_scale(ASSET_PATHS.get("check_icon"), (31, 31))
 x_icon_img = safe_load_and_scale(ASSET_PATHS.get("x_icon"), (33, 27))
+next_question_btn_img = safe_load_and_scale(ASSET_PATHS.get("next_question_btn"),(126,42))
+wallpaperScrollSurface = IM.scrollSurface('wallpaper')
+flooringScrollSurface = IM.scrollSurface('flooring')
+furnitureScrollSurface = IM.scrollSurface('furniture')
 AdornmentScrollSurface = IM.scrollSurface('Adornment')
 bodyScrollSurface = IM.scrollSurface('body')
+faceScrollSurface = IM.scrollSurface('face')
+homeSurface = IM.home_surface()
 # ================
 # 상태 및 버튼 정의 (이미지 경로 지정 가능)
 # ================
@@ -354,6 +375,7 @@ scroll_offset_x = 0
 guest_btn = Button((25, 335, 300, 67), image_path=ASSET_PATHS.get("guest_button"))
 account_btn = Button((25, 425, 300, 67), image_path=ASSET_PATHS.get("account_button"))
 setting_btn = Button((292, 17, 41, 41), image_path=None)
+next_question_btn = Button(((88, 518, 178, 72)),image_path=None)
 #items_middle_btn = Button((121, 550, 107, 150), image_path=None)
 #items_right_btn = Button((238, 550, 107, 150), image_path=None)
 scroll_btn = Button((0,550,300,150),image_path=None)
@@ -416,11 +438,14 @@ MOMENTUM_CUTOFF = 2
 last_mouse_y = 0
 scroll_offset_y =0
 item_clicked_flag = False
-category_in_room = 'Adornment'
-category_surf_in_room = AdornmentScrollSurface
-category_in_home = ''
+category_in_room = 'body'
+category_surf_in_room = bodyScrollSurface
+category_in_home = 'furniture'
+category_surf_in_home = furnitureScrollSurface
 updateHamster = IM.get_equipped_hamster_surface()
 updateHamster_in_home = pygame.transform.smoothscale(updateHamster, (230, 230))
+level_value = 0
+
 
 # 퀴즈 준비 (만약 start_quiz 호출 없이 들어갔을 때 오류 방지)
 if quiz_questions:
@@ -446,7 +471,7 @@ while running:
             max_scroll = max(0, len(item_images) * 110 - (SCREEN_WIDTH - 40))
             scroll_offset_x = max(min(0, scroll_offset_x + event.y * 30), -max_scroll)
         
-        elif scene == "my_room" and event.type == pygame.MOUSEBUTTONDOWN and event.button ==1 and scroll_btn.is_clicked(event.pos):
+        elif (scene == "my_room" or scene == "my_home") and event.type == pygame.MOUSEBUTTONDOWN and event.button ==1 and scroll_btn.is_clicked(event.pos):
             is_dragging = True
             last_mouse_y = event.pos[1]
             momentum_velocity_y = 0  # 기존 관성 속도 제거
@@ -463,9 +488,15 @@ while running:
                 # 스크롤 오프셋 즉시 이동 (화면을 따라 움직임)
                 temp = scroll_offset_y
                 scroll_offset_y -= delta_y
-                if scroll_offset_y >= AdornmentScrollSurface.get_height()-150 or scroll_offset_y <= 0:
-                    scroll_offset_y =temp
-                    delta_y =0
+                if scene == "my_room":
+                    current_limit = category_surf_in_room.get_height()
+                else: # my_home일 때
+                    current_limit = category_surf_in_home.get_height()
+
+                # 가져온 높이(current_limit)를 기준으로 검사
+                if scroll_offset_y >= current_limit - 150 or scroll_offset_y <= 0:
+                    scroll_offset_y = temp
+                    delta_y = 0
                 
                 # 다음 프레임을 위한 마지막 위치 업데이트
                 last_mouse_y = event.pos[1]
@@ -483,20 +514,38 @@ while running:
                 if back_btn_my_room.is_clicked(pos):
                     scene = "main_menu"
                 # 아이템 구매/착용 처리
-                item_pos = (pos[0],pos[1]-539+scroll_offset_y)
+                item_pos = (pos[0],pos[1]-537+scroll_offset_y)
                 for item in IM.item_class_list:
                     if item.is_clicked(item_pos) and not IM.is_purchased(item) and clicked == False and item.broad_category == category_in_room:
 
                         IM.purchase_item(item)
                         updateHamster = IM.get_equipped_hamster_surface()
-                        updateHamster_in_home = pygame.transform.smoothscale(updateHamster, (200, 200))
+                        updateHamster_in_home = pygame.transform.smoothscale(updateHamster, (230, 230))
                     elif item.is_clicked(item_pos) and IM.is_purchased(item) and clicked == False and item.broad_category == category_in_room:
                         if IM.is_equipped(item) and category_in_room != 'body':
                             IM.unequip_item(item)
                         else:
                             IM.equip_item(item)
                         updateHamster = IM.get_equipped_hamster_surface()
-                        updateHamster_in_home = pygame.transform.smoothscale(updateHamster, (200, 200))
+                        updateHamster_in_home = pygame.transform.smoothscale(updateHamster, (230, 230))
+            elif scene == "my_home" and  momentum_velocity_y <= 0.1 and has_moved == False and clicked == False:
+                
+                #if back_btn_my_room.is_clicked(pos):
+                 #   scene = "main_menu"
+                # 아이템 구매/착용 처리
+                item_pos = (pos[0],pos[1]-537+scroll_offset_y)
+                for item in IM.item_class_list:
+                    if item.is_clicked(item_pos) and not IM.is_purchased(item) and clicked == False and item.broad_category == category_in_home:
+
+                        IM.purchase_item(item)
+                        
+                    elif item.is_clicked(item_pos) and IM.is_purchased(item) and clicked == False and item.broad_category == category_in_home:
+                        if IM.is_equipped(item) and category_in_home not in ['flooring','wallpaper']:
+                            IM.unequip_item(item)
+                        else:
+                            IM.equip_item(item)
+                        homeSurface = IM.home_surface()
+                        
             is_dragging = False
         
         if not is_dragging:
@@ -544,9 +593,13 @@ while running:
                 elif setting_btn.is_clicked(pos):
                     scene = "settings"
             # 공통 뒤로가기
-            if scene in ["social_vs", "settings", "practice_level_selection", "practice_test_selection", "quiz_results", "ranking", "my_home","my_room"]:
+            if scene in ["social_vs", "settings", "practice_level_selection", "practice_test_selection", "quiz_results", "ranking", "my_home"]:
                 if back_btn.is_clicked(pos):
                     scene = "main_menu"
+            elif scene == "my_room":
+                if back_btn.is_clicked(pos):
+                    scene = "my_home"
+                    scroll_offset_y = 0
             # 연습 레벨 선택
             if scene == "practice_level_selection":
                 for i, btn in enumerate(level_buttons):
@@ -578,6 +631,7 @@ while running:
                 elif not answer_checked:
                     for btn in answer_buttons:
                         if btn.is_clicked(pos):
+                            
                             user_answer = btn.text
                             answer_checked = True
                             selected_answer_button = btn
@@ -589,8 +643,20 @@ while running:
                                 word_key = correct_answer
                                 selected_answer_explanation = word_meaning_manager.get(word_key)
                             feedback_active = True
-                            pygame.time.set_timer(pygame.USEREVENT, FEEDBACK_DURATION_MS)
+                            #pygame.time.set_timer(pygame.USEREVENT, FEEDBACK_DURATION_MS)
                             break
+                if next_question_btn.is_clicked(pos) and scene == "quiz_game" and answer_checked and feedback_active:
+                    current_question_index += 1
+                    user_answer, answer_checked = None, False
+                    feedback_active = False
+                    selected_answer_button = None
+                    selected_answer_correct = False
+                    selected_answer_explanation = ""
+                    if current_question_index < total_questions:
+                        prepare_current_question()
+                        
+                    else:
+                        scene = "quiz_results"
                     
             elif scene == "quiz_results":
                 if retry_btn.is_clicked(pos):
@@ -613,22 +679,34 @@ while running:
                     scene = "ranking"
                 elif nav_buttons[7].is_clicked(pos):
                     scene = "my_room"
-            elif scene == "my_room":
-                if nav_btn_in_room[0].is_clicked(pos):
+            elif scene == "my_room" :
+                if nav_btn_in_room[0].is_clicked(pos) and not category_in_room == 'body':
                     category_in_room = 'body'
                     category_surf_in_room = bodyScrollSurface
                     scroll_offset_y = 0
-                elif nav_btn_in_room[1].is_clicked(pos):
-                    category_in_room = 'Adornment'
-                    category_surf_in_room = AdornmentScrollSurface
+                elif nav_btn_in_room[1].is_clicked(pos) and not category_in_room == 'face' and not clicked:
+                    category_in_room = 'face'
+                    category_surf_in_room = faceScrollSurface
                     scroll_offset_y = 0
-                elif nav_btn_in_room[2].is_clicked(pos):
+                elif nav_btn_in_room[2].is_clicked(pos) and not category_in_room == 'Adornment':
                     category_in_room = 'Adornment'
                     category_surf_in_room = AdornmentScrollSurface
                     scroll_offset_y = 0
             elif scene == "my_home":
                 if from_home_to_room.is_clicked(pos):
                     scene = "my_room"
+                if nav_btn_in_room[0].is_clicked(pos) and not category_in_home == 'furniture':
+                    category_in_home = 'furniture'
+                    category_surf_in_home = furnitureScrollSurface
+                    scroll_offset_y = 0
+                elif nav_btn_in_room[1].is_clicked(pos) and not category_in_home == 'wallpaper' and not clicked:
+                    category_in_home = 'wallpaper'
+                    category_surf_in_home = wallpaperScrollSurface
+                    scroll_offset_y = 0
+                elif nav_btn_in_room[2].is_clicked(pos) and not category_in_home == 'flooring':
+                    category_in_home = 'flooring'
+                    category_surf_in_home = flooringScrollSurface
+                    scroll_offset_y = 0
             # 설정 화면 테마 토글
             elif scene == "settings":
                 '''if theme_btn.is_clicked(pos):
@@ -684,7 +762,11 @@ while running:
         back_btn_my_room.transparent_draw(screen)
         equipped =  IM.get_equipped_items()
         screen.blit(my_room_bg,(0,0))
+        screen.blit(eval(f"{category_in_room}_btn_img"),(0,0))
+        
+        
         screen.blit(updateHamster,(175-updateHamster.get_width()/2,148))
+        
         for i in nav_btn_in_room:
             i.transparent_draw(screen)
         '''if 'glasses' in equipped and 'sunflower' in equipped:
@@ -696,7 +778,8 @@ while running:
         else:
             screen.blit(my_room_bg,(0,0))'''
         
-        screen.blit(category_surf_in_room,(0,539),area=(0,scroll_offset_y,350,170))
+        screen.blit(category_surf_in_room,(0,537),area=(0,scroll_offset_y,350,170))
+        
         '''for item in IM.item_data['item_name']:
             if not IM.is_purchased(item):
                 if item == 'sunflower':
@@ -722,8 +805,18 @@ while running:
         screen.blit(flushing_price_img, (8,SCREEN_HEIGHT-40))'''
     
     elif scene == "my_home":
+        screen.blit(homeSurface,(0,0))
         screen.blit(my_home_bg,(0,0))
         screen.blit(updateHamster_in_home,(175-updateHamster_in_home.get_width()/2,220))
+        screen.blit(category_surf_in_home,(0,537),area=(0,scroll_offset_y,350,170))
+        if category_in_home == 'furniture':
+            screen.blit(eval(f"{category_in_home}_btn_img"),(0,485))
+        if category_in_home == 'wallpaper':
+            screen.blit(eval(f"{category_in_home}_btn_img"),(0,299))
+        if category_in_home == 'flooring':
+            screen.blit(eval(f"{category_in_home}_btn_img"),(0,485))
+        
+        
         back_btn.transparent_draw(screen)
         from_home_to_room.transparent_draw(screen)
         rect = pygame.Rect(280, 25, 40, 22)
@@ -860,6 +953,9 @@ while running:
                             screen.blit(icon_surface, icon_rect)
                         
                 btn.base_color = original_color
+            next_question_btn.transparent_draw(screen)
+            if answer_checked == True:
+                screen.blit(next_question_btn_img,(115,532))
 
         #exit_quiz_flow_btn.draw(screen)
 
@@ -867,16 +963,16 @@ while running:
         title_text = "연습 결과" if current_quiz_mode == "practice" else "테스트 결과"
         title = font_large.render(title_text, True, COLORS['text']); screen.blit(title, title.get_rect(center=(SCREEN_WIDTH/2, 100)))
         score_text = font_medium.render(f"총 {total_questions}문제 중 {score}개를 맞혔습니다!", True, COLORS['text']); screen.blit(score_text, score_text.get_rect(center=(SCREEN_WIDTH/2, 220)))
-        pass_threshold = total_questions * 0.9 if total_questions else 9999
+        pass_threshold = total_questions * 0.1 if total_questions else 9999
         if current_quiz_mode == "practice" and score >= pass_threshold and current_level < 3 and current_level + 1 > unlocked_level:
             unlocked_level = current_level + 1
             #save_level_progress(unlocked_level)
             unlock_message = "🎉 다음 레벨이 해금되었습니다! 🎉"
         elif current_quiz_mode == "test" and score >= pass_threshold and dotori_obtained == False:
-            dotori_earned = random.randint(5, 15)
+            dotori_earned = level_value * random.randint(5, 15)
             total_dotori = load_dotori_count() + dotori_earned
             save_dotori_count(total_dotori)
-            unlock_message = f"도토리 {dotori_earned}개를 획득했습니다! 🎉 (총 도토리: {total_dotori}개)"
+            unlock_message = f"해바라기씨앗 {dotori_earned}개를 획득했습니다! 🎉 (총 해바라기씨앗: {total_dotori}개)"
         msg, color = ("🎉 통과했습니다! 🎉", BLUE) if score >= pass_threshold else ("다시 도전해보세요!", RED)
         result = font_large.render(msg, True, color); screen.blit(result, result.get_rect(center=(SCREEN_WIDTH/2, 300)))
         try:
