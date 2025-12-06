@@ -12,7 +12,7 @@ def safe_load_and_scale(path, target_size ):
             return None
         
         img = pygame.image.load(path).convert_alpha()
-        return pygame.transform.smoothscale(img, target_size)
+        return pygame.transform.smoothscale(img,target_size)
         
     except Exception as e:  # <-- 에러를 잡아서 변수 'e'에 저장!
         print("--- 이미지 로드 실패 상세 디버깅 ---")
