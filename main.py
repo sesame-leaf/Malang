@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import os
 import math
+import pygame_gui
 
 pygame.font.init()
 SCREEN_WIDTH, SCREEN_HEIGHT = 350, 700
@@ -14,7 +15,8 @@ import itemShopManager
 
 from features import font_large ,font_medium ,font_small ,font_tiny ,font_atomic
 from features import Button
-
+from features import get_text_lines
+from features import draw_text_in_container
 
 # ================
 # 기본 경로 설정
@@ -180,7 +182,7 @@ def load_dotori_count():
 # ================
 # 헬퍼 함수
 # ================
-def get_text_lines(text, font, max_width):
+'''def get_text_lines(text, font, max_width):
     if not text:
         return []
     words, lines, current_line = text.split(' '), [], ""
@@ -215,7 +217,7 @@ def draw_text_in_container(lines, font, color, surface, container_rect, align="l
                 
             surface.blit(line_surface, line_rect)
 
-            y_offset += font.get_height()
+            y_offset += font.get_height()'''
 
 
 # ================
@@ -769,35 +771,10 @@ while running:
         
         for i in nav_btn_in_room:
             i.transparent_draw(screen)
-        '''if 'glasses' in equipped and 'sunflower' in equipped:
-            screen.blit(hamster_with_glasses_and_sunflower,(0,0))
-        elif 'glasses' in equipped:
-            screen.blit(hamster_with_glasses,(0,0))
-        elif 'sunflower' in equipped:
-            screen.blit(hamster_with_sunflower,(0,0))
-        else:
-            screen.blit(my_room_bg,(0,0))'''
         
         screen.blit(category_surf_in_room,(0,537),area=(0,scroll_offset_y,350,170))
         
-        '''for item in IM.item_data['item_name']:
-            if not IM.is_purchased(item):
-                if item == 'sunflower':
-                    screen.blit(sunflower_price_img, (124, SCREEN_HEIGHT - 40))
-                elif item == 'glasses':
-                    screen.blit(glasses_price_img, (238, SCREEN_HEIGHT - 40))
-            elif not IM.is_equipped(item):
-                if item == 'sunflower':
-                    screen.blit(put_on_img, put_on_img.get_rect(center=( SCREEN_WIDTH/2,SCREEN_HEIGHT - 27)))
-                elif item == 'glasses':
-                    screen.blit(put_on_img, put_on_img.get_rect(center=( SCREEN_WIDTH*(2/3)+put_on_img.get_width()/2+28,SCREEN_HEIGHT - 27)))
-                    
-            else:
-                if item == 'sunflower':
-                    screen.blit(lay_off_img, lay_off_img.get_rect(center=( SCREEN_WIDTH/2,SCREEN_HEIGHT - 27)))
-                elif item == 'glasses':
-                    screen.blit(lay_off_img, lay_off_img.get_rect(center=( SCREEN_WIDTH*(2/3)+lay_off_img.get_width()/2+28,SCREEN_HEIGHT - 27)))'''
-        
+
         rect = pygame.Rect(280, 25, 40, 22)
         draw_text_in_container(f"{load_dotori_count()}", font_tiny, (255,255,255), screen, rect, align="center")
         '''items_middle_btn.transparent_draw(screen)
@@ -911,10 +888,10 @@ while running:
 
                 if answer_checked and btn is selected_answer_button:
                     if (not selected_answer_correct) and selected_answer_explanation:
-                        text_lines = get_text_lines(selected_answer_explanation, font_tiny, btn.rect.width - 60)
-                        max_text_width = max((font_tiny.size(line)[0] for line in text_lines), default=0)
+                        text_lines = get_text_lines(selected_answer_explanation, font_small, btn.rect.width - 60)
+                        max_text_width = max((font_small.size(line)[0] for line in text_lines), default=0)
                         box_width = max_text_width + 20
-                        text_height = len(text_lines) * font_tiny.get_height()
+                        text_height = len(text_lines) * font_small.get_height()
                         overlay_rect = pygame.Rect(0, 0, box_width, text_height)
                         overlay_rect.center = btn.rect.center
                         icon_surface = x_icon_img
@@ -924,11 +901,11 @@ while running:
                             overlay_rect.centerx += (icon_surface.get_width() + icon_gap) / 2
                         draw_text_in_container(
                             text_lines,
-                            font_tiny,
+                            font_small,
                             (255, 255, 255),
                             screen,
                             overlay_rect,
-                            align="center"
+                            align="left"
                         )
                         if icon_surface:
                             icon_rect = icon_surface.get_rect()
@@ -942,7 +919,7 @@ while running:
                     else:
                         icon_surface = check_icon_img if selected_answer_correct else x_icon_img
                         if icon_surface:
-                            text_surface = font_tiny.render(btn.text, True, COLORS['text'])
+                            text_surface = font_small.render(btn.text, True, COLORS['text'])
                             text_rect = text_surface.get_rect(center=btn.rect.center)
                             icon_rect = icon_surface.get_rect()
                             icon_rect.centery = text_rect.centery
@@ -986,6 +963,8 @@ while running:
         draw_quiz_bubble(screen)'''
 
     pygame.display.flip()
+
+    pygame.time.Clock().tick(60)
 
 pygame.quit()
 sys.exit()
