@@ -495,8 +495,10 @@ while running:
 
             if scroll_offset_y < 0:
                 scroll_offset_y = 0
+                momentum_velocity_y = 0  # 한계에 도달하면 관성 속도 제거
             elif scroll_offset_y > max_scroll_limit:
                 scroll_offset_y = max_scroll_limit
+                momentum_velocity_y = 0  # 한계에 도달하면 관성 속도 제거
 
 
             '''if not(scroll_offset_y >= category_surf_in_room.get_height() - 150) and not (scroll_offset_y < 0):
@@ -1047,7 +1049,7 @@ while running:
         else: # my_room
             limit_height = category_surf_in_room.get_height()
             
-        max_scroll = max(0, limit_height - 170)
+        max_scroll = max(0, limit_height - 150)
 
         # 위쪽 벽 충돌
         if scroll_offset_y < 0:
