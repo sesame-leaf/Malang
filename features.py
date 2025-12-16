@@ -205,6 +205,7 @@ class Button:
                     # 4. 각 줄을 그리기 (왼쪽 정렬 효과: 모든 줄이 start_x에서 시작)
                     for i, line in enumerate(lines):
                         line_surface = font_small.render(line, True, text_color)
+                        
                         surface.blit(line_surface, (start_x, start_y + (i * line_height)))
                     
        

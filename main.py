@@ -4,7 +4,7 @@ import pandas as pd
 import random
 import os
 import math
-import pygame_gui
+
 
 pygame.font.init()
 SCREEN_WIDTH, SCREEN_HEIGHT = 350, 700
@@ -37,6 +37,7 @@ ASSET_PATHS = {
     "exit_button": os.path.join(base_path, "assets", "btn_exit.png"),
     "login_menu_bg": os.path.join(base_path, "assets", "login_menu_bg.png"),
     "main_menu_bg": os.path.join(base_path, "assets", "main_menu_bg.png"),
+    "quiz_results_bg": os.path.join(base_path, "assets", "quiz_results_bg.png"),
     "room_bg": os.path.join(base_path, "assets", "room_bg.png"),
     "social_vs_bg": os.path.join(base_path, "assets", "social_vs_bg.png"),
     "my_room_bg": os.path.join(base_path, "assets", "my_room_bg.png"),
@@ -52,6 +53,8 @@ ASSET_PATHS = {
     "select_the_meaning_bg": os.path.join(base_path, "assets", "select_the_meaning_bg.png"),
     "check_icon": os.path.join(base_path, "assets", "check_img.png"),
     "x_icon": os.path.join(base_path, "assets", "x_icon.png"),
+    "correct_img": os.path.join(base_path,"assets","correct.png"),
+    "incorrect_img": os.path.join(base_path,"assets","incorrect.png"),
     "next_question_btn": os.path.join(base_path,"assets","next_question_btn.png"),
     "char_default": os.path.join(base_path, "assets", "char_default.png"),
     "item_shirt": os.path.join(base_path, "assets", "item_shirt.png"),
@@ -335,6 +338,7 @@ def safe_load_and_scale(path, target_size):
 back_button_img = safe_load_and_scale(ASSET_PATHS.get("back_button"), (33, 33))
 login_menu_bg = safe_load_and_scale(ASSET_PATHS.get("login_menu_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 main_menu_bg = safe_load_and_scale(ASSET_PATHS.get("main_menu_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+quiz_results_bg = safe_load_and_scale(ASSET_PATHS.get("quiz_results_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 social_vs_bg = safe_load_and_scale(ASSET_PATHS.get("social_vs_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 pick_a_word_bg = safe_load_and_scale(ASSET_PATHS.get("pick_a_word_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 select_the_meaning_bg = safe_load_and_scale(ASSET_PATHS.get("select_the_meaning_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -359,6 +363,8 @@ glasses_price_img = safe_load_and_scale(ASSET_PATHS.get("glasses_price"), (100, 
 char_default_img = safe_load_and_scale(ASSET_PATHS.get("char_default"), (160, 200))
 check_icon_img = safe_load_and_scale(ASSET_PATHS.get("check_icon"), (31, 31))
 x_icon_img = safe_load_and_scale(ASSET_PATHS.get("x_icon"), (33, 27))
+correct_img = safe_load_and_scale(ASSET_PATHS.get("correct_img"), (303, 68))
+incorrect_img = safe_load_and_scale(ASSET_PATHS.get("incorrect_img"), (303, 68))
 next_question_btn_img = safe_load_and_scale(ASSET_PATHS.get("next_question_btn"),(121,41))
 wallpaperScrollSurface = IM.scrollSurface('wallpaper')
 flooringScrollSurface = IM.scrollSurface('flooring')
@@ -411,7 +417,7 @@ back_btn_settings = Button((20, 19, 33, 33),text='back',image_path=None)
 back_btn_my_room = Button((18, 13, 33, 33),image_path=None)
 
 level_buttons = [Button((75, 175 + i*100, 200, 60), f"{i+1}단계") for i in range(3)]
-retry_btn, main_menu_btn = Button((40, 450, 130, 50), "다시하기"), Button((180, 450, 130, 50), "메인 메뉴")
+retry_btn, main_menu_btn = Button((15, 457, 155, 66)), Button((180, 457, 155, 66))
 exit_quiz_flow_btn = Button((SCREEN_WIDTH - 100, SCREEN_HEIGHT - 60, 80, 40), "나가기", image_path=ASSET_PATHS.get("exit_button"))
 
 # 설정 토글 (이미지로 표시할 토글 경로 사용)
@@ -435,7 +441,7 @@ quiz_bubble_visible = False
 is_dragging = False
 has_moved = False
 momentum_velocity_y = 0
-FRICTION = 0.8
+FRICTION = 0.95
 MOMENTUM_CUTOFF = 2
 last_mouse_y = 0
 scroll_offset_y =0
@@ -447,8 +453,8 @@ category_surf_in_home = furnitureScrollSurface
 updateHamster = IM.get_equipped_hamster_surface()
 updateHamster_in_home = pygame.transform.smoothscale(updateHamster, (230, 230))
 level_value = 0
-
-
+delta_y = 0
+wheel = False
 # 퀴즈 준비 (만약 start_quiz 호출 없이 들어갔을 때 오류 방지)
 if quiz_questions:
     prepare_current_question()
@@ -462,16 +468,51 @@ while running:
     # 3. 특정 타입(예: 마우스 클릭)이 '없는지' 확인합니다.
     if pygame.MOUSEMOTION not in event_types:
         is_dragging2 = False
-
+    if pygame.MOUSEWHEEL not in event_types and wheel:
+        wheel = False
+        is_dragging = False
+        has_moved = False
     for event in event_list:
         if event.type == pygame.QUIT:
             running = False
-
+        # --- 1) 마우스 휠 이벤트 ---
         # 마우스 휠로 집 화면 아이템 슬라이드 처리
-        if scene == "my_room" and event.type == pygame.MOUSEWHEEL:
+        elif (scene == "my_room" or scene == "my_home") and event.type == pygame.MOUSEWHEEL and scroll_btn.is_clicked(pygame.mouse.get_pos()):
             # 한 슬롯 너비는 110 (같은 방식으로 하드코딩된 UI를 준수)
-            max_scroll = max(0, len(item_images) * 110 - (SCREEN_WIDTH - 40))
-            scroll_offset_x = max(min(0, scroll_offset_x + event.y * 30), -max_scroll)
+            is_dragging = True
+            has_moved = True
+            wheel = True
+            # 2. ★핵심★ 위치(scroll_offset_y)를 건드리지 않습니다!
+            # 오직 '속도'에만 값을 누적시킵니다.
+            # 휠을 연속으로 빠르게 굴리면 이 값이 +20, +40, +60... 이렇게 쌓여서 빨라집니다.
+            momentum_velocity_y += (event.y * 7)
+            
+            scroll_offset_y -= event.y * 7
+
+            # 2. 변경된 값이 범위를 벗어났는지 확인하고 잡아줍니다. (Clamping)
+            if scene == "my_home":
+                max_scroll_limit = max(0,category_surf_in_home.get_height() - 150)
+            else:
+                max_scroll_limit = max(0,category_surf_in_room.get_height() - 150)
+
+            if scroll_offset_y < 0:
+                scroll_offset_y = 0
+                momentum_velocity_y = 0  # 한계에 도달하면 관성 속도 제거
+            elif scroll_offset_y > max_scroll_limit:
+                scroll_offset_y = max_scroll_limit
+                momentum_velocity_y = 0  # 한계에 도달하면 관성 속도 제거
+
+
+            '''if not(scroll_offset_y >= category_surf_in_room.get_height() - 150) and not (scroll_offset_y < 0):
+                if event.y < 0:
+                    scroll_offset_y += 15
+                else:
+                    scroll_offset_y -= 15
+            elif (scroll_offset_y > category_surf_in_room.get_height() - 150):
+                scroll_offset_y = category_surf_in_room.get_height() - 150
+            elif (scroll_offset_y < 0):
+                scroll_offset_y = 0'''
+        
         
         elif (scene == "my_room" or scene == "my_home") and event.type == pygame.MOUSEBUTTONDOWN and event.button ==1 and scroll_btn.is_clicked(event.pos):
             is_dragging = True
@@ -480,7 +521,7 @@ while running:
             has_moved = False
         
         # --- 2) 마우스 드래그/움직임 ---
-        if event.type == pygame.MOUSEMOTION:
+        if event.type == pygame.MOUSEMOTION and is_dragging:
             is_dragging2 = True
             if is_dragging:
                 has_moved = True
@@ -505,14 +546,13 @@ while running:
                 
                 # ★ 관성 속도를 최근 움직인 속도로 갱신 ★
                 # (delta_y를 그대로 사용하면 간단하게 구현 가능)
-                momentum_velocity_y = delta_y 
+                momentum_velocity_y = 2*delta_y 
         
         
                 
         # --- 3) 마우스 버튼 떼기/터치 해제 (관성 시작) ---
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            if scene == "my_room" and  momentum_velocity_y <= 0.1 and has_moved == False and clicked == False:
-                
+            if scene == "my_room" and momentum_velocity_y <= 0.1 and has_moved == False and clicked == False:
                 if back_btn_my_room.is_clicked(pos):
                     scene = "main_menu"
                 # 아이템 구매/착용 처리
@@ -547,19 +587,21 @@ while running:
                         else:
                             IM.equip_item(item)
                         homeSurface = IM.home_surface()
-                        
             is_dragging = False
-        
-        if not is_dragging:
-            # 1. 관성 속도만큼 스크롤 오프셋 이동
-            scroll_offset_y -= momentum_velocity_y
+            '''if not has_moved:
+                momentum_velocity_y = delta_y
+                delta_y =0 # 드래그 중이 아닐 때만 관성 속도 설정'''
+          # 감속 효과
+        #if not is_dragging:
+                # 1. 관성 속도만큼 스크롤 오프셋 이동
+        '''scroll_offset_y -= momentum_velocity_y
 
-            # 2. 마찰(Friction) 적용: 속도를 점진적으로 줄임
-            momentum_velocity_y *= FRICTION 
+                # 2. 마찰(Friction) 적용: 속도를 점진적으로 줄임
+        momentum_velocity_y *= FRICTION
 
             # 3. 속도가 너무 느려지면 멈춤 (0으로 고정)
-            if abs(momentum_velocity_y) < MOMENTUM_CUTOFF:
-                momentum_velocity_y = 0
+        if abs(momentum_velocity_y) < MOMENTUM_CUTOFF:
+            momentum_velocity_y = 0'''
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = event.pos
@@ -885,8 +927,37 @@ while running:
                 else:
                     btn.base_color = COLORS['ui_bg']
                 btn.transparent_draw(screen)
-
+                x_err = 3
+                y_err =1
                 if answer_checked and btn is selected_answer_button:
+                    if (not selected_answer_correct) and selected_answer_explanation:
+                        text_lines = get_text_lines(selected_answer_explanation, font_small, btn.rect.width - 60)
+                        max_text_width = max((font_small.size(line)[0] for line in text_lines), default=0)
+                        text_height = len(text_lines) * font_small.get_height()
+                        box_width = max_text_width 
+                        overlay_rect = pygame.Rect(0, 0, box_width, text_height)
+
+                        overlay_rect.center = btn.rect.center
+                        overlay_rect.x -= x_err
+                        overlay_rect.y -= y_err
+                        screen.blit(incorrect_img,(btn.rect.x - x_err,btn.rect.y - y_err))
+                        
+                        draw_text_in_container(
+                            text_lines,
+                            font_small,
+                            0,
+                            screen,
+                            overlay_rect,
+                            align="left"
+                        )
+                    else:
+                        if selected_answer_correct:
+                            screen.blit(correct_img,(btn.rect.x-x_err,btn.rect.y-y_err))
+                        
+                        else:
+                            screen.blit(incorrect_img,(btn.rect.x-x_err,btn.rect.y-y_err))
+                        btn.transparent_draw(screen)
+                '''if answer_checked and btn is selected_answer_button:
                     if (not selected_answer_correct) and selected_answer_explanation:
                         text_lines = get_text_lines(selected_answer_explanation, font_small, btn.rect.width - 60)
                         max_text_width = max((font_small.size(line)[0] for line in text_lines), default=0)
@@ -927,7 +998,7 @@ while running:
                             min_left = btn.rect.left + 6
                             if icon_rect.left < min_left:
                                 icon_rect.left = min_left
-                            screen.blit(icon_surface, icon_rect)
+                            screen.blit(icon_surface, icon_rect)'''
                         
                 btn.base_color = original_color
             next_question_btn.transparent_draw(screen)
@@ -937,9 +1008,10 @@ while running:
         #exit_quiz_flow_btn.draw(screen)
 
     elif scene == "quiz_results":
-        title_text = "연습 결과" if current_quiz_mode == "practice" else "테스트 결과"
-        title = font_large.render(title_text, True, COLORS['text']); screen.blit(title, title.get_rect(center=(SCREEN_WIDTH/2, 100)))
-        score_text = font_medium.render(f"총 {total_questions}문제 중 {score}개를 맞혔습니다!", True, COLORS['text']); screen.blit(score_text, score_text.get_rect(center=(SCREEN_WIDTH/2, 220)))
+        screen.blit(quiz_results_bg, (0,0))
+        #title_text = "연습 결과" if current_quiz_mode == "practice" else "테스트 결과"
+        #title = font_large.render(title_text, True, COLORS['text']); screen.blit(title, title.get_rect(center=(SCREEN_WIDTH/2, 100)))
+        score_text = font_medium.render(f"총 {total_questions}문제 중 {score}개를 맞혔습니다!", True, COLORS['text']); screen.blit(score_text, score_text.get_rect(center=(SCREEN_WIDTH/2, 240)))
         pass_threshold = total_questions * 0.1 if total_questions else 9999
         if current_quiz_mode == "practice" and score >= pass_threshold and current_level < 3 and current_level + 1 > unlocked_level:
             unlocked_level = current_level + 1
@@ -951,16 +1023,45 @@ while running:
             save_dotori_count(total_dotori)
             unlock_message = f"해바라기씨앗 {dotori_earned}개를 획득했습니다! 🎉 (총 해바라기씨앗: {total_dotori}개)"
         msg, color = ("🎉 통과했습니다! 🎉", BLUE) if score >= pass_threshold else ("다시 도전해보세요!", RED)
-        result = font_large.render(msg, True, color); screen.blit(result, result.get_rect(center=(SCREEN_WIDTH/2, 300)))
+        result = font_large.render(msg, True, color); screen.blit(result, result.get_rect(center=(SCREEN_WIDTH/2, 320)))
         try:
             unlock_msg_render = font_tiny.render(unlock_message, True, GREEN_LIGHT)
-            screen.blit(unlock_msg_render, unlock_msg_render.get_rect(center=(SCREEN_WIDTH/2, 350)))
+            screen.blit(unlock_msg_render, unlock_msg_render.get_rect(center=(SCREEN_WIDTH/2, 370)))
         except:
             pass
-        retry_btn.draw(screen); main_menu_btn.draw(screen)
+        retry_btn.transparent_draw(screen); main_menu_btn.transparent_draw(screen)
 
     '''if quiz_bubble_visible:
         draw_quiz_bubble(screen)'''
+    if is_dragging:
+        # 드래그 중일 때는 '현재 움직임'이 없으면 속도를 빠르게 죽입니다.
+        # 움직이고 있다면 이벤트 루프에서 momentum_velocity_y가 계속 갱신되므로 이 코드를 이겨내고 속도가 유지됩니다.
+        momentum_velocity_y *= 0.6 
+    else:
+        # 손을 뗐을 때 (관성 모드)
+        scroll_offset_y -= momentum_velocity_y
+        momentum_velocity_y *= 0.95 # 자연스러운 감속 (0.9 ~ 0.99 사이 조절)
+
+        # 아주 느려지면 완전히 멈춤
+        if abs(momentum_velocity_y) < 0.1:
+            momentum_velocity_y = 0
+
+        # --- [범위 제한 (Clamping)] ---
+        if scene == "my_home":
+            limit_height = category_surf_in_home.get_height()
+        else: # my_room
+            limit_height = category_surf_in_room.get_height()
+            
+        max_scroll = max(0, limit_height - 150)
+
+        # 위쪽 벽 충돌
+        if scroll_offset_y < 0:
+            scroll_offset_y = 0
+            momentum_velocity_y = 0
+        # 아래쪽 벽 충돌
+        elif scroll_offset_y > max_scroll:
+            scroll_offset_y = max_scroll
+            momentum_velocity_y = 0
 
     pygame.display.flip()
 
