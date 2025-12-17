@@ -218,7 +218,7 @@ class Button:
 try:
     FONT_PATH = os.path.join(base_path, "assets", "onkim.ttf")
     
-    font_large = pygame.font.Font(FONT_PATH, 36)
+    font_large = pygame.font.Font(FONT_PATH, 39)
     font_medium = pygame.font.Font(FONT_PATH, 24)
     font_small = pygame.font.Font(FONT_PATH, 17)
     font_tiny = pygame.font.Font(FONT_PATH, 14)
@@ -230,6 +230,8 @@ except Exception:
     except Exception:
         pass
     font_large, font_medium, font_small, font_tiny = [pygame.font.SysFont(None, size) for size in [48, 32, 24, 18]]
+
+
 
 '''def create_question_display():
     os.path.join()

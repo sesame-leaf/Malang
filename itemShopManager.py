@@ -114,7 +114,7 @@ class Item:
         wh = pygame.Surface((self.itemIcon.get_width(),Item.dotoriImgWidth))
         wh.fill((255,255,255))
         self.superScreen.blit(wh,(self.rect.x,self.rect.y+self.itemIcon.get_height()))
-        if self.broad_category not in ['wallpaper','body','flooring']:
+        if self.broad_category not in ['wallpaper','body','flooring','furniture']:
             self.superScreen.blit(lay_off_img,(self.rect.x+(self.itemIcon.get_width()-lay_off_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-lay_off_img.get_height())/2+2))
         else:
             self.superScreen.blit(using_img,(self.rect.x+(self.itemIcon.get_width()-using_img.get_width())/2,self.rect.y+self.itemIcon.get_height()+(self.dotoriImg.get_height()-using_img.get_height())/2+2))

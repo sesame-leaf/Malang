@@ -53,9 +53,11 @@ ASSET_PATHS = {
     "select_the_meaning_bg": os.path.join(base_path, "assets", "select_the_meaning_bg.png"),
     "check_icon": os.path.join(base_path, "assets", "check_img.png"),
     "x_icon": os.path.join(base_path, "assets", "x_icon.png"),
+    "pick_a_option_img": os.path.join(base_path, "assets", "pick_a_option.png"),
+    "not_answered_img": os.path.join(base_path, "assets", "not_answered.png"),
     "correct_img": os.path.join(base_path,"assets","correct.png"),
     "incorrect_img": os.path.join(base_path,"assets","incorrect.png"),
-    "next_question_btn": os.path.join(base_path,"assets","next_question_btn.png"),
+    "next_question_btn": os.path.join(base_path,"assets","new_next_question_btn.png"),
     "char_default": os.path.join(base_path, "assets", "char_default.png"),
     "item_shirt": os.path.join(base_path, "assets", "item_shirt.png"),
     "item_pants": os.path.join(base_path, "assets", "item_pants.png"),
@@ -185,43 +187,6 @@ def load_dotori_count():
 # ================
 # 헬퍼 함수
 # ================
-'''def get_text_lines(text, font, max_width):
-    if not text:
-        return []
-    words, lines, current_line = text.split(' '), [], ""
-    for word in words:
-        if font.size(current_line + word)[0] < max_width:
-            current_line += word + " "
-        else:
-            lines.append(current_line.strip()); current_line = word + " "
-    if current_line:
-        lines.append(current_line.strip())
-    return lines
-
-def draw_text_in_container(lines, font, color, surface, container_rect, align="left"):
-    y_offset = 0
-    if not color==0:
-        pygame.draw.rect(surface, color,container_rect)
-    try:
-        if lines.isdigit() :
-            line_surface = font.render(lines, True, (0,0,0))
-            surface.blit(line_surface, line_surface.get_rect(center=container_rect.center))
-    except:
-        indent = 0
-        for i,line in enumerate(lines):
-            line_surface = font.render(line, True, (0,0,0))
-            line_rect = line_surface.get_rect()
-            if i == 0:
-                indent = (container_rect.width - line_rect.width) / 2
-            if align == "left":
-                line_rect.topleft = (container_rect.x+indent, container_rect.y + y_offset)
-            elif align == "center":
-                line_rect.midtop = (container_rect.centerx, container_rect.y +y_offset)
-                
-            surface.blit(line_surface, line_rect)
-
-            y_offset += font.get_height()'''
-
 
 # ================
 # 퀴즈 로직 상태 변수
@@ -342,6 +307,9 @@ quiz_results_bg = safe_load_and_scale(ASSET_PATHS.get("quiz_results_bg"), (SCREE
 social_vs_bg = safe_load_and_scale(ASSET_PATHS.get("social_vs_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 pick_a_word_bg = safe_load_and_scale(ASSET_PATHS.get("pick_a_word_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
 select_the_meaning_bg = safe_load_and_scale(ASSET_PATHS.get("select_the_meaning_bg"), (SCREEN_WIDTH, SCREEN_HEIGHT))
+rect = pygame.Rect(75, 80, 200, 30)
+pygame.draw.rect(select_the_meaning_bg, (255,246,246), rect, 0)
+pygame.draw.rect(pick_a_word_bg, (255,246,246), rect, 0)
 my_room_bg = pygame.image.load(ASSET_PATHS.get("my_room_bg")).convert()
 my_room_bg = pygame.transform.smoothscale(my_room_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
 my_room_bg.set_colorkey((255,255,255), pygame.RLEACCEL)
@@ -363,9 +331,11 @@ glasses_price_img = safe_load_and_scale(ASSET_PATHS.get("glasses_price"), (100, 
 char_default_img = safe_load_and_scale(ASSET_PATHS.get("char_default"), (160, 200))
 check_icon_img = safe_load_and_scale(ASSET_PATHS.get("check_icon"), (31, 31))
 x_icon_img = safe_load_and_scale(ASSET_PATHS.get("x_icon"), (33, 27))
+not_answered_img = safe_load_and_scale(ASSET_PATHS.get("not_answered_img"), (303, 68))
 correct_img = safe_load_and_scale(ASSET_PATHS.get("correct_img"), (303, 68))
 incorrect_img = safe_load_and_scale(ASSET_PATHS.get("incorrect_img"), (303, 68))
-next_question_btn_img = safe_load_and_scale(ASSET_PATHS.get("next_question_btn"),(121,41))
+pick_a_option_btn_img = safe_load_and_scale(ASSET_PATHS.get("pick_a_option_img"),(180, 77))
+next_question_btn_img = safe_load_and_scale(ASSET_PATHS.get("next_question_btn"),(180, 77))
 wallpaperScrollSurface = IM.scrollSurface('wallpaper')
 flooringScrollSurface = IM.scrollSurface('flooring')
 furnitureScrollSurface = IM.scrollSurface('furniture')
@@ -889,9 +859,13 @@ while running:
                 current_y = 85
                 context_y = 140
             else:
-                screen.blit(select_the_meaning_bg, (0,0))
-                current_y = 85
-                context_y = 130
+                if context_existence == '':
+                    screen.blit(select_the_meaning_bg, (0,0))
+                    current_y = 100
+                else:
+                    screen.blit(select_the_meaning_bg, (0,0))
+                    current_y = 85
+                    context_y = 130
             for btn in nav_buttons[3:]:
                 btn.transparent_draw(screen)
             back_btn.transparent_draw(screen)
@@ -904,7 +878,7 @@ while running:
 
             q_lines = get_text_lines(question.get('문제', ''), font_small, 240)
             q_rect = pygame.Rect(55, current_y, 240, len(q_lines) * font_small.get_height()+5)
-            draw_text_in_container(q_lines, font_small, (255,244,244), screen, q_rect,align="left")
+            draw_text_in_container(q_lines, font_small, 0, screen, q_rect,align="left")
             current_y = q_rect.bottom 
 
             context_text = None
@@ -929,6 +903,8 @@ while running:
                 btn.transparent_draw(screen)
                 x_err = 3
                 y_err =1
+               
+                btn.transparent_draw(screen)
                 if answer_checked and btn is selected_answer_button:
                     if (not selected_answer_correct) and selected_answer_explanation:
                         text_lines = get_text_lines(selected_answer_explanation, font_small, btn.rect.width - 60)
@@ -940,6 +916,7 @@ while running:
                         overlay_rect.center = btn.rect.center
                         overlay_rect.x -= x_err
                         overlay_rect.y -= y_err
+                
                         screen.blit(incorrect_img,(btn.rect.x - x_err,btn.rect.y - y_err))
                         
                         draw_text_in_container(
@@ -957,53 +934,17 @@ while running:
                         else:
                             screen.blit(incorrect_img,(btn.rect.x-x_err,btn.rect.y-y_err))
                         btn.transparent_draw(screen)
-                '''if answer_checked and btn is selected_answer_button:
-                    if (not selected_answer_correct) and selected_answer_explanation:
-                        text_lines = get_text_lines(selected_answer_explanation, font_small, btn.rect.width - 60)
-                        max_text_width = max((font_small.size(line)[0] for line in text_lines), default=0)
-                        box_width = max_text_width + 20
-                        text_height = len(text_lines) * font_small.get_height()
-                        overlay_rect = pygame.Rect(0, 0, box_width, text_height)
-                        overlay_rect.center = btn.rect.center
-                        icon_surface = x_icon_img
-                        icon_gap = 6 if icon_surface else 0
-                        if icon_surface:
-                            # Shift the entire overlay right so icon+text are centered as a group.
-                            overlay_rect.centerx += (icon_surface.get_width() + icon_gap) / 2
-                        draw_text_in_container(
-                            text_lines,
-                            font_small,
-                            (255, 255, 255),
-                            screen,
-                            overlay_rect,
-                            align="left"
-                        )
-                        if icon_surface:
-                            icon_rect = icon_surface.get_rect()
-                            icon_rect.centery = btn.rect.centery
-                            text_left = overlay_rect.centerx - max_text_width / 2
-                            icon_rect.right = text_left - icon_gap
-                            min_left = btn.rect.left + 6
-                            if icon_rect.left < min_left:
-                                icon_rect.left = min_left
-                            screen.blit(icon_surface, icon_rect)
-                    else:
-                        icon_surface = check_icon_img if selected_answer_correct else x_icon_img
-                        if icon_surface:
-                            text_surface = font_small.render(btn.text, True, COLORS['text'])
-                            text_rect = text_surface.get_rect(center=btn.rect.center)
-                            icon_rect = icon_surface.get_rect()
-                            icon_rect.centery = text_rect.centery
-                            icon_rect.right = text_rect.left - 6
-                            min_left = btn.rect.left + 6
-                            if icon_rect.left < min_left:
-                                icon_rect.left = min_left
-                            screen.blit(icon_surface, icon_rect)'''
+                else:
+                    screen.blit(not_answered_img,(btn.rect.x - x_err,btn.rect.y - y_err))
+                    btn.transparent_draw(screen)
                         
                 btn.base_color = original_color
             next_question_btn.transparent_draw(screen)
             if answer_checked == True:
-                screen.blit(next_question_btn_img,(114,532))
+                screen.blit(next_question_btn_img,(next_question_btn.rect.x,next_question_btn.rect.y))
+                
+            else:
+                screen.blit(pick_a_option_btn_img,(next_question_btn.rect.x,next_question_btn.rect.y))
 
         #exit_quiz_flow_btn.draw(screen)
 
@@ -1021,11 +962,11 @@ while running:
             dotori_earned = level_value * random.randint(5, 15)
             total_dotori = load_dotori_count() + dotori_earned
             save_dotori_count(total_dotori)
-            unlock_message = f"해바라기씨앗 {dotori_earned}개를 획득했습니다! 🎉 (총 해바라기씨앗: {total_dotori}개)"
+            unlock_message = f"해바라기씨앗 {dotori_earned}개를 획득했습니다! 🌻"
         msg, color = ("🎉 통과했습니다! 🎉", BLUE) if score >= pass_threshold else ("다시 도전해보세요!", RED)
         result = font_large.render(msg, True, color); screen.blit(result, result.get_rect(center=(SCREEN_WIDTH/2, 320)))
         try:
-            unlock_msg_render = font_tiny.render(unlock_message, True, GREEN_LIGHT)
+            unlock_msg_render = font_small.render(unlock_message, True, (255,140,0))
             screen.blit(unlock_msg_render, unlock_msg_render.get_rect(center=(SCREEN_WIDTH/2, 370)))
         except:
             pass
